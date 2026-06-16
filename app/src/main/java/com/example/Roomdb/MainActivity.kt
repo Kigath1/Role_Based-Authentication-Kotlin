@@ -4,8 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.Roomdb.ui.theme.TestsTheme
 import com.example.Roomdb.ui.view.PostListScreen
+import com.example.Roomdb.viewmodel.PostViewModel
+import com.example.Roomdb.viewmodel.PostViewModelFactory
 
  class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,7 +16,11 @@ import com.example.Roomdb.ui.view.PostListScreen
         enableEdgeToEdge()
         setContent {
             TestsTheme {
-                PostListScreen()
+                // Create ViewModel with factory
+                val factory = PostViewModelFactory(MainApplicationInstance.postRepository)
+                val viewModel: PostViewModel = viewModel(factory = factory)
+
+                PostListScreen(viewModel = viewModel)
             }
         }
     }
