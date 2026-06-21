@@ -63,6 +63,10 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+    implementation("androidx.navigation3:navigation3-runtime:1.0.0-alpha10")
+    implementation("androidx.navigation3:navigation3-ui:1.0.0-alpha10")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:1.0.0-alpha01")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
 
     // Networking using retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -75,6 +79,7 @@ dependencies {
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Coil for image loading (optional)
     implementation("io.coil-kt:coil-compose:2.5.0")

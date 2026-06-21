@@ -1,26 +1,44 @@
- package com.example.Roomdb
+package com.example.Roomdb
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.Roomdb.ui.theme.TestsTheme
-import com.example.Roomdb.ui.view.PostListScreen
-import com.example.Roomdb.viewmodel.PostViewModel
-import com.example.Roomdb.viewmodel.PostViewModelFactory
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import com.example.Roomdb.navigation.AppNavHost
+import com.example.Roomdb.ui.view.ClientHomeScreen
+import com.example.Roomdb.ui.view.LoginScreen
+import com.example.Roomdb.ui.view.WorkerHomeScreen
 
- class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            TestsTheme {
-                // Create ViewModel with factory
-                val factory = PostViewModelFactory(MainApplicationInstance.postRepository)
-                val viewModel: PostViewModel = viewModel(factory = factory)
 
-                PostListScreen(viewModel = viewModel)
+        // Pull the pre-built AuthViewModel from the Application class
+        val app = application as TestKonnectApplication
+        val authViewModel = app.authViewModel
+
+        setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    AppNavHost(
+                        authViewModel = authViewModel,
+                        loginContent = { onSuccess ->
+                            LoginScreen(authViewModel, onSuccess)
+                        },
+                        workerHomeContent = { onLogout ->
+                            WorkerHomeScreen(authViewModel, onLogout)
+                        },
+                        clientHomeContent = { onLogout ->
+                            ClientHomeScreen(authViewModel, onLogout)
+                        }
+                    )
+                }
             }
         }
     }
