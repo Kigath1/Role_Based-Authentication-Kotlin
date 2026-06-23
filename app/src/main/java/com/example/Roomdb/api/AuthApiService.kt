@@ -1,7 +1,7 @@
 package com.example.Roomdb.api
 
-import com.example.Roomdb.model.LoginRequest
-import com.example.Roomdb.model.LoginResponse
+import com.example.Roomdb.data.remote.model.auth.LoginRequest
+import com.example.Roomdb.data.remote.model.auth.LoginResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 

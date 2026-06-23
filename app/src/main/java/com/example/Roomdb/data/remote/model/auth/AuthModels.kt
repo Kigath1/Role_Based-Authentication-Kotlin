@@ -1,4 +1,4 @@
-package com.example.Roomdb.model
+package com.example.Roomdb.data.remote.model.auth
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.Roomdb.viewmodel.AuthViewModel
+import com.example.Roomdb.viewmodel.auth.AuthViewModel
 
 @Composable
 fun AppNavHost(

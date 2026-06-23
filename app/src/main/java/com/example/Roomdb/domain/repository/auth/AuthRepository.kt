@@ -1,4 +1,4 @@
-package com.example.Roomdb.domain.repository
+package com.example.Roomdb.domain.repository.auth
 
 import com.example.Roomdb.data.model.UserProfile
 

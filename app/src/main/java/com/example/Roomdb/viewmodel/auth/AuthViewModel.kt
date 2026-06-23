@@ -1,15 +1,13 @@
-package com.example.Roomdb.viewmodel
+package com.example.Roomdb.viewmodel.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.Roomdb.api.RetrofitInstance
 import com.example.Roomdb.data.model.UserProfile
-import com.example.Roomdb.domain.usecases.CheckAuthStatusUseCase
-import com.example.Roomdb.domain.usecases.GetCurrentUserUseCase
-import com.example.Roomdb.domain.usecases.GetUserRoleUseCase
-import com.example.Roomdb.domain.usecases.LoginUseCase
-import com.example.Roomdb.domain.usecases.LogoutUseCase
-import com.example.Roomdb.model.LoginRequest
+import com.example.Roomdb.domain.usecases.auth.CheckAuthStatusUseCase
+import com.example.Roomdb.domain.usecases.auth.GetCurrentUserUseCase
+import com.example.Roomdb.domain.usecases.auth.GetUserRoleUseCase
+import com.example.Roomdb.domain.usecases.auth.LoginUseCase
+import com.example.Roomdb.domain.usecases.auth.LogoutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

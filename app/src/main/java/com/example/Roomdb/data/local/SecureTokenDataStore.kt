@@ -46,7 +46,6 @@ class SecureTokenDataStore(private val context: Context) {
         return generator.generateKey()
     }
 
-    // Stored as base64(iv):base64(ciphertext)
     private fun encrypt(plainText: String): String {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
