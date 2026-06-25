@@ -15,7 +15,7 @@ data class ClientHomeUiState(
     val workers: List<Worker> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val currentLocation: String? = null // null = fetch all
+    val currentLocation: String? = null
 )
 
 class ClientHomeViewModel(
@@ -24,6 +24,9 @@ class ClientHomeViewModel(
 
     private val _uiState = MutableStateFlow(ClientHomeUiState())
     val uiState: StateFlow<ClientHomeUiState> = _uiState.asStateFlow()
+
+    // Wired from ClientHomeScreen — navigates to ChatScreen
+    var onNavigateToChat: ((recipientId: String, recipientName: String) -> Unit)? = null
 
     fun selectTab(index: Int) {
         _uiState.update { it.copy(selectedTabIndex = index) }
@@ -49,17 +52,13 @@ class ClientHomeViewModel(
         }
     }
 
-    // Called when the user taps "Message"
-    fun onMessageClicked(workerId: String) {
-        // TODO: Navigate to ChatScreen with workerId
-        // For now, you can log it or show a toast via a callback.
-        // We'll expose a callback from the UI side.
-        _uiState.update { it.copy(error = "Chat with $workerId (coming soon)") }
+    fun onMessageClicked(worker: Worker) {
+        // worker.userId is the account-level ID the messaging API needs
+        // worker.id is the profile ID — not what /messages endpoints accept
+        onNavigateToChat?.invoke(worker.userId, worker.fullName)
     }
 
-    // Called when "Hire" is tapped
     fun onHireClicked(workerId: String) {
-        // TODO: Navigate to Hire flow
-        _uiState.update { it.copy(error = "Hire $workerId (coming soon)") }
+        // TODO: implement hire flow
     }
 }

@@ -6,26 +6,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.Roomdb.ui.view.employer.HomeTab
 import com.example.Roomdb.ui.view.employer.ProfileTab
+import com.example.Roomdb.ui.view.employer.chats.ChatListTab
+import com.example.Roomdb.viewmodel.employer.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientHomeScreen(
     viewModel: ClientHomeViewModel,
-    onLogout: () -> Unit
+    chatListViewModel: ChatListViewModel,
+    onLogout: () -> Unit,
+    onOpenChat: (recipientId: String, recipientName: String) -> Unit
 ) {
+    // Wire the navigation callback into the ViewModel once
+    // so WorkerListCard's Message button can trigger navigation
+    viewModel.onNavigateToChat = onOpenChat
+
     val uiState by viewModel.uiState.collectAsState()
     val selectedTabIndex = uiState.selectedTabIndex
-    val tabs = listOf("Home", "Workers", "Profile")
+    val tabs = listOf("Home", "Workers", "Messages", "Profile")
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Client Dashboard") },
                 actions = {
-                    TextButton(onClick = onLogout) {
-                        Text("Log out")
-                    }
+                    TextButton(onClick = onLogout) { Text("Log out") }
                 }
             )
         }
@@ -41,11 +47,17 @@ fun ClientHomeScreen(
                 }
             }
 
-            // Content based on selected tab
             when (selectedTabIndex) {
                 0 -> HomeTab()
-                1 -> WorkersTab(viewModel = viewModel, modifier = Modifier.weight(1f))
-                2 -> ProfileTab()
+                1 -> WorkersTab(
+                    viewModel = viewModel,
+                    modifier = Modifier.weight(1f)
+                )
+                2 -> ChatListTab(
+                    viewModel = chatListViewModel,
+                    onOpenChat = onOpenChat
+                )
+                3 -> ProfileTab()
             }
         }
     }

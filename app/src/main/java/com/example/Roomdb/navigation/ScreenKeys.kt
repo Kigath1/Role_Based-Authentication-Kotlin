@@ -17,4 +17,9 @@ sealed interface ScreenKey : NavKey {
 
     @Serializable
     data object ClientHome : ScreenKey
+
+    @Serializable data class Chat(
+        val recipientId: String,
+        val recipientName: String
+    ) : ScreenKey
 }

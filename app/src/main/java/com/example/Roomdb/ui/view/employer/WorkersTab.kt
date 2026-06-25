@@ -18,10 +18,7 @@ fun WorkersTab(
     viewModel: ClientHomeViewModel,
     modifier: Modifier = Modifier
 ) {
-    // Was: viewModel.uiState.value  (snapshot — no recomposition)
-    // Now: collectAsState()         (reactive — recomposes on every update)
     val uiState by viewModel.uiState.collectAsState()
-
     val workers = uiState.workers
     val isLoading = uiState.isLoading
     val error = uiState.error
@@ -79,7 +76,8 @@ fun WorkersTab(
                     items(workers) { worker ->
                         WorkerListCard(
                             worker = worker,
-                            onMessage = { viewModel.onMessageClicked(worker.id) },
+                            // Pass full worker so onMessageClicked gets worker.userId
+                            onMessage = { viewModel.onMessageClicked(worker) },
                             onHire = { viewModel.onHireClicked(worker.id) }
                         )
                     }

@@ -15,17 +15,30 @@ import com.example.Roomdb.viewmodel.auth.AuthViewModel
 @Composable
 fun AppNavHost(
     authViewModel: AuthViewModel,
-    loginContent: @Composable (onLoginSuccess: (role: String) -> Unit) -> Unit,
-    workerHomeContent: @Composable (onLogout: () -> Unit) -> Unit,
-    clientHomeContent: @Composable (onLogout: () -> Unit) -> Unit
+    loginContent: @Composable (
+        onLoginSuccess: (role: String) -> Unit
+    ) -> Unit,
+    workerHomeContent: @Composable (
+        onLogout: () -> Unit
+    ) -> Unit,
+    clientHomeContent: @Composable (
+        onLogout: () -> Unit,
+        onOpenChat: (recipientId: String, recipientName: String) -> Unit
+    ) -> Unit,
+    chatContent: @Composable (
+        recipientId: String,
+        recipientName: String,
+        onBack: () -> Unit
+    ) -> Unit
 ) {
     val backStack = rememberNavBackStack(ScreenKey.Splash)
 
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
-
         entryProvider = entryProvider {
+
+            // ── SPLASH ───────────────────────────────────────────────────────
             entry<ScreenKey.Splash> {
                 LaunchedEffect(Unit) {
                     val isLoggedIn = authViewModel.checkAutoLogin()
@@ -33,27 +46,31 @@ fun AppNavHost(
                         when (authViewModel.getUserRole()) {
                             "WORKER" -> ScreenKey.WorkerHome
                             "CLIENT" -> ScreenKey.ClientHome
-                            else -> ScreenKey.Login
+                            else     -> ScreenKey.Login
                         }
                     } else {
                         ScreenKey.Login
                     }
-                    backStack.clear()
+                    backStack.removeLastOrNull()
                     backStack.add(nextKey)
                 }
-
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
 
+            // ── LOGIN ────────────────────────────────────────────────────────
             entry<ScreenKey.Login> {
                 loginContent { role ->
-                    backStack.clear()
-                    backStack.add(if (role == "WORKER") ScreenKey.WorkerHome else ScreenKey.ClientHome)
+                    backStack.removeLastOrNull()
+                    backStack.add(
+                        if (role == "WORKER") ScreenKey.WorkerHome
+                        else ScreenKey.ClientHome
+                    )
                 }
             }
 
+            // ── WORKER HOME ──────────────────────────────────────────────────
             entry<ScreenKey.WorkerHome> {
                 workerHomeContent {
                     backStack.clear()
@@ -61,10 +78,28 @@ fun AppNavHost(
                 }
             }
 
+            // ── CLIENT HOME ──────────────────────────────────────────────────
             entry<ScreenKey.ClientHome> {
-                clientHomeContent {
-                    backStack.clear()
-                    backStack.add(ScreenKey.Login)
+                clientHomeContent(
+                    // onLogout
+                    {
+                        backStack.clear()
+                        backStack.add(ScreenKey.Login)
+                    },
+                    // onOpenChat — backStack lives here so we push Chat from here
+                    { recipientId, recipientName ->
+                        backStack.add(ScreenKey.Chat(recipientId, recipientName))
+                    }
+                )
+            }
+
+            // ── CHAT ─────────────────────────────────────────────────────────
+            entry<ScreenKey.Chat> { key ->
+                chatContent(
+                    key.recipientId,
+                    key.recipientName
+                ) {
+                    backStack.removeLastOrNull()
                 }
             }
         }

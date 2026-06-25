@@ -1,4 +1,4 @@
-package com.example.Roomdb.api
+package com.example.Roomdb.api.employer
 
 import com.example.Roomdb.data.remote.model.employer.WorkerSearchResponse
 import retrofit2.http.GET
