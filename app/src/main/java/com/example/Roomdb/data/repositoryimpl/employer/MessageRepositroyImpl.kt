@@ -24,7 +24,7 @@ class MessageRepositoryImpl(
                     otherUserName = if (isSender) dto.receiverName else dto.senderName,
                     lastMessage = dto.content,
                     sentAt = dto.sentAt,
-                    isRead = dto.isRead
+                    isRead = if (isSender) true else dto.isRead
                 )
             }
             Result.success(conversations)

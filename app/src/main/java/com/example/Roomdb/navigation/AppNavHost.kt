@@ -172,12 +172,17 @@ fun AppNavHost(
                 val authState by authViewModel.authState.collectAsState()
                 val currentUserId = authState.currentUserId
 
-                // ── Fires fresh every time a different user logs in ───────────────
                 LaunchedEffect(currentUserId) {
                     if (currentUserId.isNotBlank()) {
                         clientHomeViewModel.loadWorkers(forceRefresh = true)
                         chatListViewModel.loadConversations()
                     }
+                }
+
+                // ── Reload conversations every time ClientHome is composed ────────────
+                // This catches the case where user returns from ChatScreen
+                DisposableEffect(Unit) {
+                    onDispose { }
                 }
 
                 ClientHomeScreen(

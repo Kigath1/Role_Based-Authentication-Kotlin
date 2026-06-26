@@ -8,9 +8,12 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.Roomdb.navigation.AppNavHost
 import com.example.Roomdb.ui.view.employer.chats.ChatScreen
@@ -116,20 +119,29 @@ class MainActivity : ComponentActivity() {
                         // ── CHAT — still external because ChatViewModel needs
                         //    a per-entry factory keyed on recipientId/recipientName ──
                         chatContent = { recipientId, recipientName, onBack ->
-                            val chatViewModel = viewModel<ChatViewModel>(
+                            // ── Create a unique ViewModelStoreOwner for each chat ──────────────────
+                            val viewModelStoreOwner = remember(recipientId) {
+                                object : ViewModelStoreOwner {
+                                    override val viewModelStore = ViewModelStore()
+                                }
+                            }
+
+                            val chatViewModel: ChatViewModel = viewModel(
+                                viewModelStoreOwner = viewModelStoreOwner,
                                 factory = object : ViewModelProvider.Factory {
                                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                                         @Suppress("UNCHECKED_CAST")
                                         return ChatViewModel(
-                                            app.getConversationUseCase,
-                                            app.sendMessageUseCase,
-                                            app.secureStore,
-                                            recipientId,
-                                            recipientName
+                                            getConversationUseCase = app.getConversationUseCase,
+                                            sendMessageUseCase = app.sendMessageUseCase,
+                                            secureStore = app.secureStore,
+                                            recipientId = recipientId,
+                                            recipientName = recipientName
                                         ) as T
                                     }
                                 }
                             )
+
                             ChatScreen(viewModel = chatViewModel, onBack = onBack)
                         }
                     )
