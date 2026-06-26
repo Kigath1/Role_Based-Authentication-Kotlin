@@ -39,6 +39,15 @@ class ClientHomeViewModel(
         loadWorkers(forceRefresh = true)
     }
 
+    init {
+        loadWorkers()
+    }
+
+    fun clearState() {
+        _uiState.value = ClientHomeUiState()  // resets to default, tab 0, empty workers
+        onNavigateToChat = null
+    }
+
     fun loadWorkers(forceRefresh: Boolean = false) {
         val location = _uiState.value.currentLocation
         viewModelScope.launch {

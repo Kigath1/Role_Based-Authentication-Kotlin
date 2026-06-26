@@ -42,4 +42,8 @@ class ChatListViewModel(
             }
         }
     }
+
+    fun clearState() {
+        _uiState.value = ChatListUiState()  // resets to empty conversations
+    }
 }

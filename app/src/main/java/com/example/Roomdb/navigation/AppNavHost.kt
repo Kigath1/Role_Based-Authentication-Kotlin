@@ -169,14 +169,23 @@ fun AppNavHost(
 
             // ── CLIENT HOME ───────────────────────────────────────────────
             entry<ScreenKey.ClientHome> {
-                LaunchedEffect(Unit) {
-                    chatListViewModel.loadConversations()
+                val authState by authViewModel.authState.collectAsState()
+                val currentUserId = authState.currentUserId
+
+                // ── Fires fresh every time a different user logs in ───────────────
+                LaunchedEffect(currentUserId) {
+                    if (currentUserId.isNotBlank()) {
+                        clientHomeViewModel.loadWorkers(forceRefresh = true)
+                        chatListViewModel.loadConversations()
+                    }
                 }
 
                 ClientHomeScreen(
                     viewModel = clientHomeViewModel,
                     chatListViewModel = chatListViewModel,
                     onLogout = {
+                        clientHomeViewModel.clearState()
+                        chatListViewModel.clearState()
                         authViewModel.logout {
                             backStack.clear()
                             backStack.add(ScreenKey.Login)
