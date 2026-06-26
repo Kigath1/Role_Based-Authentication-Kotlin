@@ -1,14 +1,18 @@
 package com.example.Roomdb.api
 
 
+import com.example.Roomdb.api.auth.AuthApiService
+import com.example.Roomdb.api.employer.ClientProfileApiService
 import com.example.Roomdb.api.employer.MessageApiService
 import com.example.Roomdb.api.employer.WorkerApiService
+import com.example.Roomdb.api.worker.WorkerProfileApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import java.util.concurrent.TimeUnit
 import kotlin.getValue
 
 
@@ -31,6 +35,9 @@ object AuthTokenHolder {
 
 private fun buildClient(requiresAuth: Boolean): OkHttpClient {
     val builder = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(loggingInterceptor)
 
     if (requiresAuth) {
@@ -63,5 +70,12 @@ object RetrofitInstance {
 
     val messageApi: MessageApiService by lazy {
         buildRetrofit(requiresAuth = true).create(MessageApiService::class.java)
+    }
+
+    val clientProfileApi: ClientProfileApiService by lazy {
+        buildRetrofit(requiresAuth = true).create(ClientProfileApiService::class.java)
+    }
+    val workerProfileApi: WorkerProfileApiService by lazy {
+        buildRetrofit(requiresAuth = true).create(WorkerProfileApiService::class.java)
     }
 }

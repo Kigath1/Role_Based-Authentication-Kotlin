@@ -1,13 +1,13 @@
-package com.example.Roomdb.data.repositoryimpl
+package com.example.Roomdb.data.repositoryimpl.auth
 
 import android.util.Log
-import com.example.Roomdb.api.AuthApiService
+import com.example.Roomdb.api.auth.AuthApiService
 import com.example.Roomdb.data.local.SecureTokenDataStore
 import com.example.Roomdb.data.local.dao.UserDao
 import com.example.Roomdb.data.local.entities.UserProfileEntity
 import com.example.Roomdb.data.model.UserProfile
-import com.example.Roomdb.domain.repository.auth.AuthRepository
 import com.example.Roomdb.data.remote.model.auth.LoginRequest
+import com.example.Roomdb.domain.repository.auth.AuthRepository
 
 class AuthRepositoryImpl(
     private val authApi: AuthApiService,

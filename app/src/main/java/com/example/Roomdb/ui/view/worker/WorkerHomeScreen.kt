@@ -6,23 +6,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.Roomdb.data.model.UserProfile
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 
 @Composable
 fun WorkerHomeScreen(
-    viewModel: AuthViewModel,
+    authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
-    var profile by remember { mutableStateOf<UserProfile?>(null) }
-
-    LaunchedEffect(Unit) {
-        profile = viewModel.getCurrentUser()
-    }
+    val profile by authViewModel.currentUser.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // Header (replaces TopAppBar — no experimental API needed)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -34,7 +28,7 @@ fun WorkerHomeScreen(
                 text = "Worker Dashboard",
                 style = MaterialTheme.typography.titleLarge
             )
-            TextButton(onClick = { viewModel.logout { onLogout() } }) {
+            TextButton(onClick = { authViewModel.logout(onLogout) }) {
                 Text("Log out")
             }
         }

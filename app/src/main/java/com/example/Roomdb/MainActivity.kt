@@ -12,24 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.Roomdb.api.AuthTokenHolder
 import com.example.Roomdb.navigation.AppNavHost
-import com.example.Roomdb.ui.view.ClientHomeScreen
-import com.example.Roomdb.ui.view.auth.LoginScreen
 import com.example.Roomdb.ui.view.employer.chats.ChatScreen
-import com.example.Roomdb.ui.view.worker.WorkerHomeScreen
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
+import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 import com.example.Roomdb.viewmodel.employer.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ChatViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
+import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
+import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val app by lazy { application as TestKonnectApplication }
-
-
 
     private val authViewModel: AuthViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -37,9 +32,9 @@ class MainActivity : ComponentActivity() {
                 @Suppress("UNCHECKED_CAST")
                 return AuthViewModel(
                     app.loginUseCase,
+                    app.logoutUseCase,
                     app.getCurrentUserUseCase,
                     app.getUserRoleUseCase,
-                    app.logoutUseCase,
                     app.checkAuthStatusUseCase
                 ) as T
             }
@@ -67,6 +62,41 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val registrationViewModel: RegistrationViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return RegistrationViewModel(
+                    app.registerUseCase,
+                    app.verifyEmailUseCase,
+                    app.resendVerificationUseCase
+                ) as T
+            }
+        }
+    }
+
+    private val clientProfileSetupViewModel: ClientProfileSetupViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return ClientProfileSetupViewModel(app.createClientProfileUseCase) as T
+            }
+        }
+    }
+
+    private val workerOnboardingViewModel: WorkerOnboardingViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return WorkerOnboardingViewModel(
+                    app.createWorkerProfileUseCase,
+                    app.updateWorkerProfileUseCase,
+                    app.uploadDocumentUseCase
+                ) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -76,34 +106,14 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost(
                         authViewModel = authViewModel,
+                        clientHomeViewModel = clientHomeViewModel,
+                        chatListViewModel = chatListViewModel,
+                        registrationViewModel = registrationViewModel,
+                        clientProfileSetupViewModel = clientProfileSetupViewModel,
+                        workerOnboardingViewModel = workerOnboardingViewModel,
 
-                        // ── LOGIN ─────────────────────────────────────────────
-                        loginContent = { onLoginSuccess ->
-                            LoginScreen(authViewModel) { role ->
-                                MainScope().launch {
-                                    val token = app.secureStore.getAccessTokenOnce()
-                                    if (token != null) AuthTokenHolder.token = token
-                                    onLoginSuccess(role)   // ← navigate AFTER token is set
-                                }
-                            }
-                        },
-
-                        // ── WORKER HOME ───────────────────────────────────────
-                        workerHomeContent = { onLogout ->
-                            WorkerHomeScreen(authViewModel, onLogout)
-                        },
-
-                        // ── CLIENT HOME ───────────────────────────────────────
-                        clientHomeContent = { onLogout, onOpenChat ->
-                            ClientHomeScreen(
-                                viewModel = clientHomeViewModel,
-                                chatListViewModel = this@MainActivity.chatListViewModel,
-                                onLogout = onLogout,
-                                onOpenChat = onOpenChat
-                            )
-                        },
-
-                        // ── CHAT ──────────────────────────────────────────────
+                        // ── CHAT — still external because ChatViewModel needs
+                        //    a per-entry factory keyed on recipientId/recipientName ──
                         chatContent = { recipientId, recipientName, onBack ->
                             val chatViewModel = viewModel<ChatViewModel>(
                                 factory = object : ViewModelProvider.Factory {
@@ -127,61 +137,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
-
-
-//
-//
-//class MainActivity : ComponentActivity() {
-//
-//    private val app by lazy { application as TestKonnectApplication }
-//
-//    private val authViewModel: AuthViewModel by viewModels {
-//        object : ViewModelProvider.Factory {
-//            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//                @Suppress("UNCHECKED_CAST")
-//                return AuthViewModel(
-//                    loginUseCase = app.loginUseCase,
-//                    getCurrentUserUseCase = app.getCurrentUserUseCase,
-//                    getUserRoleUseCase = app.getUserRoleUseCase,
-//                    logoutUseCase = app.logoutUseCase,
-//                    checkAuthStatusUseCase = app.checkAuthStatusUseCase
-//                ) as T
-//            }
-//        }
-//    }
-//
-//    private val clientHomeViewModel: ClientHomeViewModel by viewModels {
-//        object : ViewModelProvider.Factory {
-//            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//                @Suppress("UNCHECKED_CAST")
-//                return ClientHomeViewModel(app.getWorkersUseCase) as T
-//            }
-//        }
-//    }
-//
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        enableEdgeToEdge()
-//
-//        setContent {
-//            MaterialTheme {
-//                Surface(modifier = Modifier.fillMaxSize()) {
-//                    AppNavHost(
-//                        authViewModel = authViewModel,
-//                        loginContent = { onSuccess ->
-//                            LoginScreen(authViewModel, onSuccess)
-//                        },
-//                        workerHomeContent = { onLogout ->
-//                            WorkerHomeScreen(authViewModel, onLogout)
-//                        },
-//                        clientHomeContent = { onLogout ->
-//                            ClientHomeScreen(viewModel = clientHomeViewModel, onLogout = onLogout)
-//                        }
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}

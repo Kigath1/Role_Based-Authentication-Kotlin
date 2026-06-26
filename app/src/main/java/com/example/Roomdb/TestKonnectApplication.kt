@@ -5,7 +5,7 @@ import androidx.room.Room
 import com.example.Roomdb.api.AuthTokenHolder
 import com.example.Roomdb.api.RetrofitInstance
 import com.example.Roomdb.data.local.SecureTokenDataStore
-import com.example.Roomdb.data.repositoryimpl.AuthRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.auth.AuthRepositoryImpl
 import com.example.Roomdb.domain.repository.auth.AuthRepository
 import com.example.Roomdb.domain.usecases.auth.CheckAuthStatusUseCase
 import com.example.Roomdb.domain.usecases.auth.GetCurrentUserUseCase
@@ -14,13 +14,26 @@ import com.example.Roomdb.domain.usecases.auth.LoginUseCase
 import com.example.Roomdb.domain.usecases.auth.LogoutUseCase
 import com.example.Roomdb.data.local.db.AppDatabase
 import com.example.Roomdb.data.repository.WorkerRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.auth.RegistrationRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.employer.ClientProfileRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.employer.MessageRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.worker.WorkerProfileRepositoryImpl
+import com.example.Roomdb.domain.repository.auth.RegistrationRepository
+import com.example.Roomdb.domain.repository.employer.ClientProfileRepository
 import com.example.Roomdb.domain.repository.employer.MessageRepository
 import com.example.Roomdb.domain.repository.employer.WorkerRepository
+import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
+import com.example.Roomdb.domain.usecases.auth.RegisterUseCase
+import com.example.Roomdb.domain.usecases.auth.ResendVerificationUseCase
+import com.example.Roomdb.domain.usecases.auth.VerifyEmailUseCase
+import com.example.Roomdb.domain.usecases.employer.CreateClientProfileUseCase
 import com.example.Roomdb.domain.usecases.employer.GetConversationUseCase
 import com.example.Roomdb.domain.usecases.employer.GetRecentConversationsUseCase
 import com.example.Roomdb.domain.usecases.employer.GetWorkersUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
+import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
 import kotlin.jvm.java
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +55,17 @@ class TestKonnectApplication : Application() {
     lateinit var getRecentConversationsUseCase: GetRecentConversationsUseCase
     lateinit var getConversationUseCase: GetConversationUseCase
     lateinit var sendMessageUseCase: SendMessageUseCase
+
+
+    lateinit var registerUseCase: RegisterUseCase
+    lateinit var verifyEmailUseCase: VerifyEmailUseCase
+    lateinit var resendVerificationUseCase: ResendVerificationUseCase
+
+    lateinit var createClientProfileUseCase: CreateClientProfileUseCase
+
+    lateinit var createWorkerProfileUseCase: CreateWorkerProfileUseCase
+    lateinit var updateWorkerProfileUseCase: UpdateWorkerProfileUseCase
+    lateinit var uploadDocumentUseCase: UploadDocumentUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -90,47 +114,23 @@ class TestKonnectApplication : Application() {
         getRecentConversationsUseCase = GetRecentConversationsUseCase(messageRepository)
         getConversationUseCase        = GetConversationUseCase(messageRepository)
         sendMessageUseCase            = SendMessageUseCase(messageRepository)
+
+
+        val registrationRepository: RegistrationRepository =
+            RegistrationRepositoryImpl(RetrofitInstance.authApi)
+        registerUseCase = RegisterUseCase(registrationRepository)
+        verifyEmailUseCase = VerifyEmailUseCase(registrationRepository)
+        resendVerificationUseCase = ResendVerificationUseCase(registrationRepository)
+
+        val clientProfileRepository: ClientProfileRepository =
+            ClientProfileRepositoryImpl(RetrofitInstance.clientProfileApi)
+        createClientProfileUseCase = CreateClientProfileUseCase(clientProfileRepository)
+
+        val workerProfileRepository: WorkerProfileRepository =
+            WorkerProfileRepositoryImpl(RetrofitInstance.workerProfileApi)
+        createWorkerProfileUseCase = CreateWorkerProfileUseCase(workerProfileRepository)
+        updateWorkerProfileUseCase = UpdateWorkerProfileUseCase(workerProfileRepository)
+        uploadDocumentUseCase = UploadDocumentUseCase(workerProfileRepository)
     }
 }
 
-
-
-//import android.app.Application
-//import androidx.room.Room
-//import com.example.Roomdb.api.RetrofitInstance
-//import com.example.Roomdb.data.local.SecureTokenDataStore
-//import com.example.Roomdb.data.repositoryimpl.AuthRepositoryImpl
-//import com.example.Roomdb.domain.repository.auth.AuthRepository
-//import com.example.Roomdb.domain.usecases.auth.CheckAuthStatusUseCase
-//import com.example.Roomdb.domain.usecases.auth.GetCurrentUserUseCase
-//import com.example.Roomdb.domain.usecases.auth.GetUserRoleUseCase
-//import com.example.Roomdb.domain.usecases.auth.LoginUseCase
-//import com.example.Roomdb.domain.usecases.auth.LogoutUseCase
-//import com.example.Roomdb.viewmodel.auth.AuthViewModel
-//import com.example.Roomdb.data.local.db.AppDatabase
-//import kotlin.jvm.java
-//
-//class TestKonnectApplication : Application() {
-//    lateinit var authViewModel: AuthViewModel
-//
-//    override fun onCreate() {
-//        super.onCreate()
-//
-//        val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "testkonnect_db")
-//            .build()
-//        val userDao = db.userDao()
-//
-//        val secureStore = SecureTokenDataStore(applicationContext)
-//        val authApi = RetrofitInstance.authApi
-//
-//        val authRepository: AuthRepository = AuthRepositoryImpl(authApi, userDao, secureStore)
-//
-//        authViewModel = AuthViewModel(
-//            loginUseCase = LoginUseCase(authRepository),
-//            getCurrentUserUseCase = GetCurrentUserUseCase(authRepository),
-//            getUserRoleUseCase = GetUserRoleUseCase(authRepository),
-//            logoutUseCase = LogoutUseCase(authRepository),
-//            checkAuthStatusUseCase = CheckAuthStatusUseCase(authRepository)
-//        )
-//    }
-//}

@@ -18,3 +18,11 @@ val KKTextPrimary = Color(0xFF202124)
 val KKTextMuted = Color(0xFF5F6368)
 val SentBubble = Color(0xFF1A73E8)
 val ReceivedBubble = Color(0xFFF1F3F4)
+
+val KaziGreen   = Color(0xFF1B6B3A)   // primary brand — Kenyan savannah
+val KaziGold    = Color(0xFFF5A623)   // accent — warm sunlight
+val SurfaceDark = Color(0xFF0D1F15)   // deep forest dark
+val CardSurface = Color(0xFFF7FAF8)
+val ErrorRed    = Color(0xFFD32F2F)
+val BorderGray  = Color(0xFFDDE3E0)
+val TextGray    = Color(0xFF6B7A72)
