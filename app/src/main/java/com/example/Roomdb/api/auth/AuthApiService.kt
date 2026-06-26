@@ -14,7 +14,7 @@ interface AuthApiService {
     @POST("auth/login")
     suspend fun login(
         @Body request: LoginRequest
-    ): LoginResponse   // assume LoginResponse is your existing model
+    ): LoginResponse
 
     // ── NEW – now returns Response<String> ───────────────────────────────
     @POST("auth/register")

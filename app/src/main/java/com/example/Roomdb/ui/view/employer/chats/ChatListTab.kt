@@ -30,46 +30,90 @@ fun ChatListTab(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = modifier.fillMaxSize()) {
-        when {
-            uiState.isLoading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+    when {
+        uiState.isLoading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        uiState.error != null && uiState.conversations.isEmpty() -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Could not load conversations", color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { viewModel.loadConversations() }) { Text("Retry") }
                 }
             }
-            uiState.error != null && uiState.conversations.isEmpty() -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Could not load messages", color = MaterialTheme.colorScheme.error)
-                        Spacer(Modifier.height(8.dp))
-                        Button(onClick = { viewModel.loadConversations() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
+        }
+        uiState.conversations.isEmpty() -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No conversations yet.\nMessage a worker to get started.",
+                    style = MaterialTheme.typography.bodyMedium)
             }
-            uiState.conversations.isEmpty() -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No conversations yet", color = KKTextMuted)
-                }
-            }
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(uiState.conversations) { conversation ->
-                        ConversationRow(
-                            conversation = conversation,
-                            onClick = {
+        }
+        else -> {
+            LazyColumn(modifier = modifier.fillMaxSize()) {
+                items(uiState.conversations) { conversation ->
+                    ListItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            // ── TAP ROW → open chat with this worker ──────
+                            .clickable {
                                 onOpenChat(
                                     conversation.otherUserId,
                                     conversation.otherUserName
                                 )
+                            },
+                        headlineContent = {
+                            Text(
+                                conversation.otherUserName,
+                                fontWeight = if (!conversation.isRead) FontWeight.Bold
+                                else FontWeight.Normal
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                conversation.lastMessage,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontSize = 13.sp
+                            )
+                        },
+                        leadingContent = {
+                            // Avatar initials
+                            Surface(
+                                modifier = Modifier.size(44.dp).clip(CircleShape),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        conversation.otherUserName.take(2).uppercase(),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
                             }
-                        )
-                        HorizontalDivider(color = KKBorder, thickness = 0.5.dp)
-                    }
+                        },
+                        trailingContent = {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    conversation.sentAt.take(10), // date portion
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (!conversation.isRead) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(8.dp)
+                                    ) {}
+                                }
+                            }
+                        }
+                    )
+                    HorizontalDivider()
                 }
             }
         }

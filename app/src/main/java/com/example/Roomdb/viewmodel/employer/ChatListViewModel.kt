@@ -25,13 +25,12 @@ class ChatListViewModel(
     private val _uiState = MutableStateFlow(ChatListUiState())
     val uiState: StateFlow<ChatListUiState> = _uiState.asStateFlow()
 
-    init {
-        loadConversations()
-    }
-
     fun loadConversations() {
         viewModelScope.launch {
-            val userId = secureStore.getUserIdOnce() ?: return@launch
+            val userId = secureStore.getUserIdOnce() ?: run {
+                _uiState.update { it.copy(error = "Not logged in") }
+                return@launch
+            }
             _uiState.update { it.copy(isLoading = true, error = null) }
             val result = getRecentConversationsUseCase(userId)
             _uiState.update {

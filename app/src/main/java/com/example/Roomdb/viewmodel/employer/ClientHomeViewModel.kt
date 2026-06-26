@@ -28,9 +28,11 @@ class ClientHomeViewModel(
     // Wired from ClientHomeScreen — navigates to ChatScreen
     var onNavigateToChat: ((recipientId: String, recipientName: String) -> Unit)? = null
 
-    fun selectTab(index: Int) {
-        _uiState.update { it.copy(selectedTabIndex = index) }
+    init {
+        loadWorkers()
     }
+
+    fun selectTab(index: Int) { _uiState.update { it.copy(selectedTabIndex = index) } }
 
     fun updateLocation(location: String?) {
         _uiState.update { it.copy(currentLocation = location) }
@@ -53,10 +55,9 @@ class ClientHomeViewModel(
     }
 
     fun onMessageClicked(worker: Worker) {
-        // worker.userId is the account-level ID the messaging API needs
-        // worker.id is the profile ID — not what /messages endpoints accept
         onNavigateToChat?.invoke(worker.userId, worker.fullName)
     }
+
 
     fun onHireClicked(workerId: String) {
         // TODO: implement hire flow

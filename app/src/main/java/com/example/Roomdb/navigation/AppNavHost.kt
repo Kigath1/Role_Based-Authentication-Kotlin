@@ -96,14 +96,13 @@ fun AppNavHost(
             entry<ScreenKey.VerifyEmail> {
                 VerifyEmailScreen(
                     viewModel = registrationViewModel,
-                    onGoToLogin = {
-                        // Clear registration off the back stack, land on Login
+                    onVerificationSuccess = {
+                        // Clear back stack and go to Login
                         backStack.clear()
                         backStack.add(ScreenKey.Login)
                     }
                 )
             }
-
             // ── CLIENT PROFILE SETUP ──────────────────────────────────────
             entry<ScreenKey.ClientProfileSetup> {
                 val currentUser by authViewModel.currentUser.collectAsState()
@@ -170,6 +169,10 @@ fun AppNavHost(
 
             // ── CLIENT HOME ───────────────────────────────────────────────
             entry<ScreenKey.ClientHome> {
+                LaunchedEffect(Unit) {
+                    chatListViewModel.loadConversations()
+                }
+
                 ClientHomeScreen(
                     viewModel = clientHomeViewModel,
                     chatListViewModel = chatListViewModel,

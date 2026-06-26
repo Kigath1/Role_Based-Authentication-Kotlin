@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,6 +23,12 @@ fun WorkersTab(
     val workers = uiState.workers
     val isLoading = uiState.isLoading
     val error = uiState.error
+
+    LaunchedEffect(Unit) {
+        if (workers.isEmpty() && !isLoading) {
+            viewModel.loadWorkers()
+        }
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
