@@ -28,7 +28,7 @@ import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 fun RegistrationScreen(
     viewModel: RegistrationViewModel,
     onNavigateToLogin: () -> Unit,
-    onNavigateToVerifyEmail: () -> Unit   // ← new callback
+    onNavigateToVerifyEmail: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -36,7 +36,7 @@ fun RegistrationScreen(
     LaunchedEffect(state.registrationSuccess) {
         if (state.registrationSuccess) {
             viewModel.consumeRegistrationSuccess()
-            onNavigateToVerifyEmail()   // ← navigate to VerifyEmail
+            onNavigateToVerifyEmail()
         }
     }
 

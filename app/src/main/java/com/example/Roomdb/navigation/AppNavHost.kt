@@ -58,15 +58,26 @@ fun AppNavHost(
 
             // ── LOGIN ─────────────────────────────────────────────────────
             entry<ScreenKey.Login> {
+                val authState by authViewModel.authState.collectAsState()
+
+                LaunchedEffect(authState.isLoggedIn) {
+                    if (authState.isLoggedIn) {
+                        val role = authState.role.uppercase()
+                        backStack.removeLastOrNull()
+                        backStack.add(
+                            when (role) {
+                                "WORKER" -> ScreenKey.WorkerHome
+                                "CLIENT" -> ScreenKey.ClientHome
+                                else -> ScreenKey.ClientHome
+                            }
+                        )
+                    }
+                }
+
                 LoginScreen(
                     authViewModel = authViewModel,
-                    onLoginSuccess = { role ->
-                        backStack.removeLastOrNull()
-                        backStack.add(if (role == "WORKER") ScreenKey.WorkerHome else ScreenKey.ClientHome)
-                    },
-                    onNavigateToRegistration = {
-                        backStack.add(ScreenKey.Registration)
-                    }
+                    onLoginSuccess = { /* handled by LaunchedEffect above */ },
+                    onNavigateToRegistration = { backStack.add(ScreenKey.Registration) }
                 )
             }
 
@@ -83,21 +94,14 @@ fun AppNavHost(
 
             // ── VERIFY EMAIL ──────────────────────────────────────────────
             entry<ScreenKey.VerifyEmail> {
-                val state by registrationViewModel.state.collectAsState()
-                LaunchedEffect(state.verificationSuccess) {
-                    if (state.verificationSuccess) {
-                        registrationViewModel.consumeVerificationSuccess()
-                        val (email, password, role) = registrationViewModel.getPendingCredentials()
-                        // Fire-and-forget is fine here: downstream screens gate
-                        // on authViewModel.currentUser, not on this call returning.
-                        authViewModel.loginSilently(email, password)
-                        val next = if (role == "Worker") ScreenKey.WorkerOnboarding
-                        else ScreenKey.ClientProfileSetup
-                        backStack.removeLastOrNull()
-                        backStack.add(next)
+                VerifyEmailScreen(
+                    viewModel = registrationViewModel,
+                    onGoToLogin = {
+                        // Clear registration off the back stack, land on Login
+                        backStack.clear()
+                        backStack.add(ScreenKey.Login)
                     }
-                }
-                VerifyEmailScreen(viewModel = registrationViewModel)
+                )
             }
 
             // ── CLIENT PROFILE SETUP ──────────────────────────────────────

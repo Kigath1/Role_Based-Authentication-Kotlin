@@ -19,51 +19,56 @@ import com.example.Roomdb.ui.theme.*
 import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 
 @Composable
-fun VerifyEmailScreen(viewModel: RegistrationViewModel) {
+fun VerifyEmailScreen(
+    viewModel: RegistrationViewModel,
+    onGoToLogin: () -> Unit
+) {
     val state by viewModel.state.collectAsState()
-    var token by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Check your email", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        Text("We sent a verification code to ${state.email}")
-        Spacer(Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = token,
-            onValueChange = { token = it },
-            label = { Text("Verification code") },
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            text = "Verify your email",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
         )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = "We've sent a verification link to your email address. " +
+                    "Click the link in the email, then come back here to log in.",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(32.dp))
+
+        // Resend button
+        OutlinedButton(
+            onClick = viewModel::resendVerification,
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (state.resendSuccess) "✓ Email resent!" else "Resend verification email")
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // After verifying in email, user taps this
+        Button(
+            onClick = onGoToLogin,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("I've verified my email — Log in")
+        }
 
         state.error?.let {
             Spacer(Modifier.height(8.dp))
-            Text(it, color = MaterialTheme.colorScheme.error)
-        }
-        if (state.resendSuccess) {
-            Spacer(Modifier.height(8.dp))
-            Text("Verification email resent.", color = MaterialTheme.colorScheme.primary)
-        }
-
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = { viewModel.verifyEmail(token) },
-            enabled = !state.isLoading && token.isNotBlank(),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else {
-                Text("Verify")
-            }
-        }
-
-        TextButton(onClick = viewModel::resendVerification) {
-            Text("Resend code")
+            Text(it, color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall)
         }
     }
 }

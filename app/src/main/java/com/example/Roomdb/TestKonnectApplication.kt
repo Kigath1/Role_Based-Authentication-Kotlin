@@ -69,68 +69,78 @@ class TestKonnectApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        try {
 
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            AppDatabase.NAME
-        ).fallbackToDestructiveMigration().build()
+            val db = Room.databaseBuilder(
+                applicationContext,
+                AppDatabase::class.java,
+                AppDatabase.NAME
+            ).fallbackToDestructiveMigration().build()
 
-        val userDao = db.userDao()
-        val workerDao = db.workerDao()
+            val userDao = db.userDao()
+            val workerDao = db.workerDao()
 
-        // Assign to the lateinit var, not a local variable
-        secureStore = SecureTokenDataStore(applicationContext)
+            secureStore = SecureTokenDataStore(applicationContext)
 
-        // Inject token into auth interceptor for returning users
-        CoroutineScope(Dispatchers.IO).launch {
-            val token = secureStore.getAccessTokenOnce()
-            if (token != null) {
-                AuthTokenHolder.token = token
-                android.util.Log.d("AppInit", "Token loaded: ${token.take(20)}...")
-            } else {
-                android.util.Log.w("AppInit", "No token found in store — user not logged in")
+            // ── Synchronous token injection ───────────────────────────────────
+            kotlinx.coroutines.runBlocking {
+                val token = secureStore.getAccessTokenOnce()
+                if (token != null) {
+                    AuthTokenHolder.token = token
+                    android.util.Log.d("AppInit", "Token loaded: ${token.take(20)}...")
+                } else {
+                    android.util.Log.w("AppInit", "No token found — user not logged in")
+                }
             }
+
+            val authApi = RetrofitInstance.authApi
+            val workerApi = RetrofitInstance.workerApi
+            val messageApi = RetrofitInstance.messageApi
+
+            // Auth
+            authRepository = AuthRepositoryImpl(authApi, userDao, secureStore)
+            loginUseCase = LoginUseCase(authRepository)
+            getCurrentUserUseCase = GetCurrentUserUseCase(authRepository)
+            getUserRoleUseCase = GetUserRoleUseCase(authRepository)
+            logoutUseCase = LogoutUseCase(authRepository)
+            checkAuthStatusUseCase = CheckAuthStatusUseCase(authRepository)
+
+            // Workers
+            workerRepository = WorkerRepositoryImpl(workerApi, workerDao)
+            getWorkersUseCase = GetWorkersUseCase(workerRepository)
+
+            // Messaging
+            messageRepository = MessageRepositoryImpl(messageApi)
+            getRecentConversationsUseCase = GetRecentConversationsUseCase(messageRepository)
+            getConversationUseCase = GetConversationUseCase(messageRepository)
+            sendMessageUseCase = SendMessageUseCase(messageRepository)
+
+            // Registration
+            val registrationRepository: RegistrationRepository =
+                RegistrationRepositoryImpl(RetrofitInstance.authApi)
+            registerUseCase = RegisterUseCase(registrationRepository)
+            verifyEmailUseCase = VerifyEmailUseCase(registrationRepository)
+            resendVerificationUseCase = ResendVerificationUseCase(registrationRepository)
+
+            // Client profile
+            val clientProfileRepository: ClientProfileRepository =
+                ClientProfileRepositoryImpl(RetrofitInstance.clientProfileApi)
+            createClientProfileUseCase = CreateClientProfileUseCase(clientProfileRepository)
+
+            // Worker profile
+            val workerProfileRepository: WorkerProfileRepository =
+                WorkerProfileRepositoryImpl(RetrofitInstance.workerProfileApi)
+            createWorkerProfileUseCase = CreateWorkerProfileUseCase(workerProfileRepository)
+            updateWorkerProfileUseCase = UpdateWorkerProfileUseCase(workerProfileRepository)
+            uploadDocumentUseCase = UploadDocumentUseCase(workerProfileRepository)
+
+            android.util.Log.d("AppInit", "All use cases initialized successfully")
+
+        } catch (e: Exception) {
+            android.util.Log.e("AppInit", "FATAL: Application init failed", e)
+            throw e   // re-throw so the crash is visible with the real cause
         }
-
-        val authApi    = RetrofitInstance.authApi
-        val workerApi  = RetrofitInstance.workerApi
-        val messageApi = RetrofitInstance.messageApi
-
-        // Auth
-        authRepository         = AuthRepositoryImpl(authApi, userDao, secureStore)
-        loginUseCase           = LoginUseCase(authRepository)
-        getCurrentUserUseCase  = GetCurrentUserUseCase(authRepository)
-        getUserRoleUseCase     = GetUserRoleUseCase(authRepository)
-        logoutUseCase          = LogoutUseCase(authRepository)
-        checkAuthStatusUseCase = CheckAuthStatusUseCase(authRepository)
-
-        // Workers
-        workerRepository  = WorkerRepositoryImpl(workerApi, workerDao)
-        getWorkersUseCase = GetWorkersUseCase(workerRepository)
-
-        // Messaging
-        messageRepository             = MessageRepositoryImpl(messageApi)
-        getRecentConversationsUseCase = GetRecentConversationsUseCase(messageRepository)
-        getConversationUseCase        = GetConversationUseCase(messageRepository)
-        sendMessageUseCase            = SendMessageUseCase(messageRepository)
-
-
-        val registrationRepository: RegistrationRepository =
-            RegistrationRepositoryImpl(RetrofitInstance.authApi)
-        registerUseCase = RegisterUseCase(registrationRepository)
-        verifyEmailUseCase = VerifyEmailUseCase(registrationRepository)
-        resendVerificationUseCase = ResendVerificationUseCase(registrationRepository)
-
-        val clientProfileRepository: ClientProfileRepository =
-            ClientProfileRepositoryImpl(RetrofitInstance.clientProfileApi)
-        createClientProfileUseCase = CreateClientProfileUseCase(clientProfileRepository)
-
-        val workerProfileRepository: WorkerProfileRepository =
-            WorkerProfileRepositoryImpl(RetrofitInstance.workerProfileApi)
-        createWorkerProfileUseCase = CreateWorkerProfileUseCase(workerProfileRepository)
-        updateWorkerProfileUseCase = UpdateWorkerProfileUseCase(workerProfileRepository)
-        uploadDocumentUseCase = UploadDocumentUseCase(workerProfileRepository)
     }
+
 }
 

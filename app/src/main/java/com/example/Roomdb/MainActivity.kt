@@ -35,7 +35,8 @@ class MainActivity : ComponentActivity() {
                     app.logoutUseCase,
                     app.getCurrentUserUseCase,
                     app.getUserRoleUseCase,
-                    app.checkAuthStatusUseCase
+                    app.checkAuthStatusUseCase,
+                    app.secureStore
                 ) as T
             }
         }

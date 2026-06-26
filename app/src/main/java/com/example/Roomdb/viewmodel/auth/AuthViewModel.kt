@@ -2,6 +2,7 @@ package com.example.Roomdb.viewmodel.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.Roomdb.api.AuthTokenHolder
 import com.example.Roomdb.data.model.UserProfile
 import com.example.Roomdb.domain.usecases.auth.CheckAuthStatusUseCase
 import com.example.Roomdb.domain.usecases.auth.GetCurrentUserUseCase
@@ -18,7 +19,8 @@ class AuthViewModel(
     private val logoutUseCase: LogoutUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val getUserRoleUseCase: GetUserRoleUseCase,
-    private val checkAuthStatusUseCase: CheckAuthStatusUseCase
+    private val checkAuthStatusUseCase: CheckAuthStatusUseCase,
+    private val secureStore: com.example.Roomdb.data.local.SecureTokenDataStore
 ) : ViewModel() {
 
     data class AuthState(
@@ -33,9 +35,6 @@ class AuthViewModel(
     private val _authState = MutableStateFlow(AuthState())
     val authState: StateFlow<AuthState> = _authState
 
-    // Single source of truth for the logged-in user's full profile.
-    // Populated by login(), checkAutoLogin(), AND loginSilently() —
-    // any screen needing the full UserProfile collects this, not authState.
     private val _currentUser = MutableStateFlow<UserProfile?>(null)
     val currentUser: StateFlow<UserProfile?> = _currentUser
 
@@ -48,6 +47,7 @@ class AuthViewModel(
         viewModelScope.launch {
             val result = loginUseCase(email, password)
             if (result.isSuccess) {
+                val savedToken = AuthTokenHolder
                 val user = getCurrentUserUseCase()
                 val role = getUserRoleUseCase()
                 _currentUser.value = user
@@ -94,12 +94,11 @@ class AuthViewModel(
         }
     }
 
-    // Called by AppNavHost after email verification, before ClientProfileSetup /
-    // WorkerOnboarding fire their auth-required calls. Populates _currentUser
-    // but deliberately does NOT flip isLoggedIn — the user is still mid-onboarding.
     fun loginSilently(email: String, password: String) {
         viewModelScope.launch {
             loginUseCase(email, password)
+            val token = secureStore.getAccessTokenOnce()
+            if (token != null) AuthTokenHolder.token = token
             _currentUser.value = getCurrentUserUseCase()
         }
     }
