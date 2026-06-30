@@ -1,4 +1,4 @@
-package com.example.Roomdb.ui.view.employer.chats
+package com.example.Roomdb.ui.view.common.chats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -6,27 +6,31 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Chat
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.Roomdb.ui.theme.*
-import com.example.Roomdb.viewmodel.employer.ChatListViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import com.example.Roomdb.data.model.employer.RecentConversation
 import com.example.Roomdb.domain.utils.DateFormatter
+import com.example.Roomdb.ui.theme.*
+import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 
 @Composable
 fun ChatListTab(
     viewModel: ChatListViewModel,
     onOpenChat: (recipientId: String, recipientName: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+
+    emptyStateTitle: String = "No messages yet",
+    emptyStateBody: String = "Your conversations will appear here."
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -46,72 +50,14 @@ fun ChatListTab(
             }
         }
         uiState.conversations.isEmpty() -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No conversations yet.\nMessage a worker to get started.",
-                    style = MaterialTheme.typography.bodyMedium)
-            }
+            EmptyConversationsState(title = emptyStateTitle, body = emptyStateBody)
         }
         else -> {
             LazyColumn(modifier = modifier.fillMaxSize()) {
                 items(uiState.conversations) { conversation ->
-                    ListItem(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            // ── TAP ROW → open chat with this worker ──────
-                            .clickable {
-                                onOpenChat(
-                                    conversation.otherUserId,
-                                    conversation.otherUserName
-                                )
-                            },
-                        headlineContent = {
-                            Text(
-                                conversation.otherUserName,
-                                fontWeight = if (!conversation.isRead) FontWeight.Bold
-                                else FontWeight.Normal
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                conversation.lastMessage,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 13.sp
-                            )
-                        },
-                        leadingContent = {
-                            // Avatar initials
-                            Surface(
-                                modifier = Modifier.size(44.dp).clip(CircleShape),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        conversation.otherUserName.take(2).uppercase(),
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                            }
-                        },
-                        trailingContent = {
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    conversation.sentAt.take(10), // date portion
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                if (!conversation.isRead) {
-                                    Spacer(Modifier.height(4.dp))
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(8.dp)
-                                    ) {}
-                                }
-                            }
-                        }
+                    ConversationRow(
+                        conversation = conversation,
+                        onClick = { onOpenChat(conversation.otherUserId, conversation.otherUserName) }
                     )
                     HorizontalDivider()
                 }
@@ -133,10 +79,7 @@ private fun ConversationRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(KKBlueLight),
+            modifier = Modifier.size(48.dp).clip(CircleShape).background(KKBlueLight),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -162,7 +105,6 @@ private fun ConversationRow(
                     color = KKTextPrimary,
                     modifier = Modifier.weight(1f)
                 )
-                // ← DateFormatter replaces the old formatTime() private function
                 Text(
                     text = DateFormatter.toListTime(conversation.sentAt),
                     fontSize = 11.sp,
@@ -182,11 +124,30 @@ private fun ConversationRow(
 
         if (!conversation.isRead) {
             Spacer(Modifier.width(8.dp))
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(KKBlue)
+            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(KKBlue))
+        }
+    }
+}
+
+@Composable
+private fun EmptyConversationsState(title: String, body: String) {
+    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                Icons.Outlined.Chat,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                body,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

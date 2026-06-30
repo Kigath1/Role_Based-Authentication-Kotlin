@@ -1,4 +1,4 @@
-package com.example.Roomdb.viewmodel.employer
+package com.example.Roomdb.viewmodel.common.chats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

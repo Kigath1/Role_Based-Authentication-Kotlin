@@ -47,7 +47,13 @@ class AuthViewModel(
         viewModelScope.launch {
             val result = loginUseCase(email, password)
             if (result.isSuccess) {
-                val savedToken = AuthTokenHolder
+                // ── FIX — actually read the token and inject it ────────────
+                val token = secureStore.getAccessTokenOnce()
+                if (token != null) {
+                    AuthTokenHolder.token = token
+                }
+                // ─────────────────────────────────────────────────────────
+
                 val user = getCurrentUserUseCase()
                 val role = getUserRoleUseCase()
                 _currentUser.value = user
@@ -76,6 +82,11 @@ class AuthViewModel(
         return try {
             val isValid = checkAuthStatusUseCase()
             if (isValid) {
+                val token = secureStore.getAccessTokenOnce()
+                if (token != null) {
+                    AuthTokenHolder.token = token
+                }
+
                 val user = getCurrentUserUseCase()
                 val role = getUserRoleUseCase()
                 _currentUser.value = user

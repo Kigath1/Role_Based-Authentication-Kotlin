@@ -18,7 +18,7 @@ import com.example.Roomdb.ui.view.worker.WorkerHomeScreen
 import com.example.Roomdb.ui.view.worker.WorkerOnboardingScreen
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
-import com.example.Roomdb.viewmodel.employer.ChatListViewModel
+import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
 
@@ -86,9 +86,7 @@ fun AppNavHost(
                 RegistrationScreen(
                     viewModel = registrationViewModel,
                     onNavigateToLogin = { backStack.add(ScreenKey.Login) },
-                    onNavigateToVerifyEmail = {
-                        backStack.add(ScreenKey.VerifyEmail)
-                    }
+                    onNavigateToVerifyEmail = { backStack.add(ScreenKey.VerifyEmail) }
                 )
             }
 
@@ -97,12 +95,12 @@ fun AppNavHost(
                 VerifyEmailScreen(
                     viewModel = registrationViewModel,
                     onVerificationSuccess = {
-                        // Clear back stack and go to Login
                         backStack.clear()
                         backStack.add(ScreenKey.Login)
                     }
                 )
             }
+
             // ── CLIENT PROFILE SETUP ──────────────────────────────────────
             entry<ScreenKey.ClientProfileSetup> {
                 val currentUser by authViewModel.currentUser.collectAsState()
@@ -117,10 +115,7 @@ fun AppNavHost(
                 }
 
                 currentUser?.let { user ->
-                    ClientProfileSetupScreen(
-                        viewModel = clientProfileSetupViewModel,
-                        email = user.email
-                    )
+                    ClientProfileSetupScreen(viewModel = clientProfileSetupViewModel, email = user.email)
                 } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -131,9 +126,6 @@ fun AppNavHost(
                 val currentUser by authViewModel.currentUser.collectAsState()
                 val state by workerOnboardingViewModel.state.collectAsState()
 
-                // Gate initialization on currentUser actually being populated —
-                // loginSilently() is async, so this must react to the flow,
-                // not read a synchronous getter on first composition.
                 LaunchedEffect(currentUser) {
                     currentUser?.let { user ->
                         workerOnboardingViewModel.initialize(user.email, user.userId)
@@ -158,11 +150,29 @@ fun AppNavHost(
 
             // ── WORKER HOME ───────────────────────────────────────────────
             entry<ScreenKey.WorkerHome> {
+                val authState by authViewModel.authState.collectAsState()
+                val currentUserId = authState.currentUserId
+
+                // ── Same shared ChatListViewModel as ClientHome — loads
+                // this worker's conversations the moment they land here ──
+                LaunchedEffect(currentUserId) {
+                    if (currentUserId.isNotBlank()) {
+                        chatListViewModel.loadConversations()
+                    }
+                }
+
                 WorkerHomeScreen(
                     authViewModel = authViewModel,
+//                    chatListViewModel = chatListViewModel,
+//                    onOpenChat = { recipientId, recipientName ->
+//                        backStack.add(ScreenKey.Chat(recipientId, recipientName))
+//                    },
                     onLogout = {
-                        backStack.clear()
-                        backStack.add(ScreenKey.Login)
+                        chatListViewModel.clearState()
+                        authViewModel.logout {
+                            backStack.clear()
+                            backStack.add(ScreenKey.Login)
+                        }
                     }
                 )
             }
@@ -177,12 +187,6 @@ fun AppNavHost(
                         clientHomeViewModel.loadWorkers(forceRefresh = true)
                         chatListViewModel.loadConversations()
                     }
-                }
-
-                // ── Reload conversations every time ClientHome is composed ────────────
-                // This catches the case where user returns from ChatScreen
-                DisposableEffect(Unit) {
-                    onDispose { }
                 }
 
                 ClientHomeScreen(
@@ -202,7 +206,7 @@ fun AppNavHost(
                 )
             }
 
-            // ── CHAT — existing, unchanged ────────────────────────────────
+            // ── CHAT — shared, role-agnostic ────────────────────────────
             entry<ScreenKey.Chat> { key ->
                 chatContent(key.recipientId, key.recipientName) {
                     backStack.removeLastOrNull()

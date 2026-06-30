@@ -16,11 +16,11 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.Roomdb.navigation.AppNavHost
-import com.example.Roomdb.ui.view.employer.chats.ChatScreen
+import com.example.Roomdb.ui.view.common.chats.ChatScreen
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
-import com.example.Roomdb.viewmodel.employer.ChatListViewModel
-import com.example.Roomdb.viewmodel.employer.ChatViewModel
+import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
+import com.example.Roomdb.viewmodel.common.chats.ChatViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
