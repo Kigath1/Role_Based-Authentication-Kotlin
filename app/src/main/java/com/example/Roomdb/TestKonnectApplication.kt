@@ -34,10 +34,8 @@ import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
 import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
+import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import kotlin.jvm.java
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class TestKonnectApplication : Application() {
 
@@ -65,6 +63,8 @@ class TestKonnectApplication : Application() {
 
     lateinit var createWorkerProfileUseCase: CreateWorkerProfileUseCase
     lateinit var updateWorkerProfileUseCase: UpdateWorkerProfileUseCase
+
+    lateinit var workerDashboardViewModel: WorkerDashboardViewModel
     lateinit var uploadDocumentUseCase: UploadDocumentUseCase
 
     override fun onCreate() {

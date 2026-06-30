@@ -23,6 +23,7 @@ import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
+import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
 
 class MainActivity : ComponentActivity() {
@@ -101,6 +102,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val workerDashboardViewModel: WorkerDashboardViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return WorkerDashboardViewModel(app.secureStore) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -115,6 +125,7 @@ class MainActivity : ComponentActivity() {
                         registrationViewModel = registrationViewModel,
                         clientProfileSetupViewModel = clientProfileSetupViewModel,
                         workerOnboardingViewModel = workerOnboardingViewModel,
+                        workerDashboardViewModel = workerDashboardViewModel,
 
                         // ── CHAT — still external because ChatViewModel needs
                         //    a per-entry factory keyed on recipientId/recipientName ──

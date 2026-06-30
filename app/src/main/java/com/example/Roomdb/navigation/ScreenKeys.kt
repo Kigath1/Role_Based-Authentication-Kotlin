@@ -33,4 +33,6 @@ sealed interface ScreenKey : NavKey {
     //WORKER ONBOARDING
 
     @Serializable data object WorkerOnboarding    : ScreenKey
+
+    data object WorkerMessages : ScreenKey
 }

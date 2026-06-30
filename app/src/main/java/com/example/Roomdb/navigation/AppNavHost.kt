@@ -20,6 +20,7 @@ import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
+import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
 
 @Composable
@@ -30,7 +31,8 @@ fun AppNavHost(
     chatContent: @Composable (recipientId: String, recipientName: String, onBack: () -> Unit) -> Unit,
     registrationViewModel: RegistrationViewModel,
     clientProfileSetupViewModel: ClientProfileSetupViewModel,
-    workerOnboardingViewModel: WorkerOnboardingViewModel
+    workerOnboardingViewModel: WorkerOnboardingViewModel,
+    workerDashboardViewModel: WorkerDashboardViewModel
 ) {
     val backStack = rememberNavBackStack(ScreenKey.Splash)
 
@@ -115,7 +117,10 @@ fun AppNavHost(
                 }
 
                 currentUser?.let { user ->
-                    ClientProfileSetupScreen(viewModel = clientProfileSetupViewModel, email = user.email)
+                    ClientProfileSetupScreen(
+                        viewModel = clientProfileSetupViewModel,
+                        email = user.email
+                    )
                 } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -153,8 +158,6 @@ fun AppNavHost(
                 val authState by authViewModel.authState.collectAsState()
                 val currentUserId = authState.currentUserId
 
-                // ── Same shared ChatListViewModel as ClientHome — loads
-                // this worker's conversations the moment they land here ──
                 LaunchedEffect(currentUserId) {
                     if (currentUserId.isNotBlank()) {
                         chatListViewModel.loadConversations()
@@ -163,12 +166,14 @@ fun AppNavHost(
 
                 WorkerHomeScreen(
                     authViewModel = authViewModel,
-//                    chatListViewModel = chatListViewModel,
-//                    onOpenChat = { recipientId, recipientName ->
-//                        backStack.add(ScreenKey.Chat(recipientId, recipientName))
-//                    },
+                    dashboardViewModel = workerDashboardViewModel,
+                    chatListViewModel = chatListViewModel,
+                    onOpenChat = { recipientId, recipientName ->
+                        backStack.add(ScreenKey.Chat(recipientId, recipientName))
+                    },
                     onLogout = {
                         chatListViewModel.clearState()
+                        workerDashboardViewModel.clearState()
                         authViewModel.logout {
                             backStack.clear()
                             backStack.add(ScreenKey.Login)
