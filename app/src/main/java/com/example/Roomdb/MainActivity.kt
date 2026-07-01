@@ -40,6 +40,8 @@ class MainActivity : ComponentActivity() {
                     app.getCurrentUserUseCase,
                     app.getUserRoleUseCase,
                     app.checkAuthStatusUseCase,
+                    app.checkWorkerProfileExistsUseCase,
+                    app.checkClientProfileExistsUseCase,
                     app.secureStore
                 ) as T
             }

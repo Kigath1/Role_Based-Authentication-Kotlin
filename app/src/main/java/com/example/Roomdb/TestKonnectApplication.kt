@@ -26,11 +26,13 @@ import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
 import com.example.Roomdb.domain.usecases.auth.RegisterUseCase
 import com.example.Roomdb.domain.usecases.auth.ResendVerificationUseCase
 import com.example.Roomdb.domain.usecases.auth.VerifyEmailUseCase
+import com.example.Roomdb.domain.usecases.employer.CheckClientProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.employer.CreateClientProfileUseCase
 import com.example.Roomdb.domain.usecases.employer.GetConversationUseCase
 import com.example.Roomdb.domain.usecases.employer.GetRecentConversationsUseCase
 import com.example.Roomdb.domain.usecases.employer.GetWorkersUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
+import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
@@ -66,6 +68,8 @@ class TestKonnectApplication : Application() {
 
     lateinit var workerDashboardViewModel: WorkerDashboardViewModel
     lateinit var uploadDocumentUseCase: UploadDocumentUseCase
+    lateinit var checkWorkerProfileExistsUseCase: CheckWorkerProfileExistsUseCase
+    lateinit var checkClientProfileExistsUseCase: CheckClientProfileExistsUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -133,6 +137,8 @@ class TestKonnectApplication : Application() {
             createWorkerProfileUseCase = CreateWorkerProfileUseCase(workerProfileRepository)
             updateWorkerProfileUseCase = UpdateWorkerProfileUseCase(workerProfileRepository)
             uploadDocumentUseCase = UploadDocumentUseCase(workerProfileRepository)
+            checkWorkerProfileExistsUseCase = CheckWorkerProfileExistsUseCase(workerProfileRepository)
+            checkClientProfileExistsUseCase = CheckClientProfileExistsUseCase(clientProfileRepository)
 
             android.util.Log.d("AppInit", "All use cases initialized successfully")
 

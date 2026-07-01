@@ -9,7 +9,7 @@ interface WorkerProfileRepository {
         request: WorkerModels.WorkerProfileRequest
     ): Result<WorkerModels.WorkerProfileResponse>
 
-    suspend fun getProfile(userId: String): Result<WorkerModels.WorkerProfileResponse>
+    suspend fun getProfile(userId: String): Result<WorkerModels.WorkerProfileResponse?>
 
     suspend fun updateProfile(
         userId: String,

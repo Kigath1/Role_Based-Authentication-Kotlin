@@ -24,24 +24,43 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.Roomdb.ui.theme.*
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
-
+import com.example.Roomdb.viewmodel.auth.PostLoginDestination
 
 @Composable
 fun LoginScreen(
-    authViewModel: AuthViewModel,
-    onLoginSuccess: (role: String) -> Unit,
-    onNavigateToRegistration: () -> Unit      // NEW — was absent in original
+    viewModel: AuthViewModel,
+    onNavigateToRegistration: () -> Unit,
+    onNavigateToWorkerHome: () -> Unit,
+    onNavigateToWorkerOnboarding: () -> Unit,
+    onNavigateToClientHome: () -> Unit,
+    onNavigateToClientProfileSetup: () -> Unit,
 ) {
-    val state by authViewModel.authState.collectAsState()
+    val state by viewModel.authState.collectAsState()
 
     var email    by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPass by remember { mutableStateOf(false) }
 
-    // React to successful login
-    LaunchedEffect(state.isLoggedIn, state.role) {
-        if (state.isLoggedIn && state.role.isNotBlank()) {
-            onLoginSuccess(state.role)
+    // ── Navigate when destination is set ──────────────────────────────
+    LaunchedEffect(state.destination) {
+        when (state.destination) {
+            PostLoginDestination.WorkerHome -> {
+                viewModel.consumeDestination()
+                onNavigateToWorkerHome()
+            }
+            PostLoginDestination.WorkerOnboarding -> {
+                viewModel.consumeDestination()
+                onNavigateToWorkerOnboarding()
+            }
+            PostLoginDestination.ClientHome -> {
+                viewModel.consumeDestination()
+                onNavigateToClientHome()
+            }
+            PostLoginDestination.ClientProfileSetup -> {
+                viewModel.consumeDestination()
+                onNavigateToClientProfileSetup()
+            }
+            null -> { /* no-op */ }
         }
     }
 
@@ -136,7 +155,7 @@ fun LoginScreen(
                         }
                     )
 
-                    // Error
+                    // Error message
                     if (state.error != null) {
                         Spacer(Modifier.height(10.dp))
                         Text(
@@ -149,7 +168,7 @@ fun LoginScreen(
                     Spacer(Modifier.height(24.dp))
 
                     Button(
-                        onClick = { authViewModel.login(email.trim(), password) },
+                        onClick = { viewModel.login(email.trim(), password) },
                         enabled = !state.isLoading && email.isNotBlank() && password.isNotBlank(),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -176,7 +195,7 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── Register link ─────────────────────────────────────────────
+            // ── Register link ────────────────────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {

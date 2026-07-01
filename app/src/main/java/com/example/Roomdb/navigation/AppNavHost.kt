@@ -77,9 +77,26 @@ fun AppNavHost(
                 }
 
                 LoginScreen(
-                    authViewModel = authViewModel,
-                    onLoginSuccess = { /* handled by LaunchedEffect above */ },
-                    onNavigateToRegistration = { backStack.add(ScreenKey.Registration) }
+                    viewModel = authViewModel,
+                    onNavigateToRegistration = {
+                        backStack.add(ScreenKey.Registration)
+                    },
+                    onNavigateToWorkerHome = {
+                        backStack.clear()
+                        backStack.add(ScreenKey.WorkerHome)
+                    },
+                    onNavigateToWorkerOnboarding = {
+                        backStack.clear()
+                        backStack.add(ScreenKey.WorkerOnboarding)
+                    },
+                    onNavigateToClientHome = {
+                        backStack.clear()
+                        backStack.add(ScreenKey.ClientHome)
+                    },
+                    onNavigateToClientProfileSetup = {
+                        backStack.clear()
+                        backStack.add(ScreenKey.ClientProfileSetup)
+                    }
                 )
             }
 

@@ -7,6 +7,7 @@ import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.HttpException
 
 class WorkerProfileRepositoryImpl(
     private val api: WorkerProfileApiService
@@ -18,11 +19,11 @@ class WorkerProfileRepositoryImpl(
         api.createProfile(email, request).profile
     }
 
-    override suspend fun getProfile(
-        userId: String
-    ): Result<WorkerModels.WorkerProfileResponse> = runCatching {
-        api.getProfile(userId)
-    }
+//    override suspend fun getProfile(
+//        userId: String
+//    ): Result<WorkerModels.WorkerProfileResponse> = runCatching {
+//        api.getProfile(userId)
+//    }
 
     override suspend fun updateProfile(
         userId: String, request: WorkerModels.WorkerProfileRequest
@@ -44,4 +45,18 @@ class WorkerProfileRepositoryImpl(
     ): Result<List<WorkerModels.DocumentResponse>> = runCatching {
         api.getDocuments(userId)
     }
+
+    override suspend fun getProfile(userId: String): Result<WorkerModels.WorkerProfileResponse?> {
+        return try {
+            val response = api.getProfile(userId)
+            when {
+                response.isSuccessful -> Result.success(response.body())
+                response.code() == 404 -> Result.success(null) // no profile yet
+                else -> Result.failure(Exception(HttpException(response)))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message))
+        }
+    }
+
 }

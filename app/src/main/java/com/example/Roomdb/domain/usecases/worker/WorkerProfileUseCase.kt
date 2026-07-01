@@ -20,3 +20,11 @@ class UploadDocumentUseCase(private val repo: WorkerProfileRepository) {
         fileBytes: ByteArray, mimeType: String
     ) = repo.uploadDocument(userId, type, name, fileBytes, mimeType)
 }
+
+class CheckWorkerProfileExistsUseCase(
+    private val repository: WorkerProfileRepository
+) {
+    suspend operator fun invoke(userId: String): Result<Boolean> {
+        return repository.getProfile(userId).map { it != null }
+    }
+}

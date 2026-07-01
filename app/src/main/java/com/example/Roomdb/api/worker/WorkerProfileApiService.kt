@@ -2,6 +2,7 @@ package com.example.Roomdb.api.worker
 
 import com.example.Roomdb.data.remote.model.WorkerModels
 import okhttp3.MultipartBody
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -19,10 +20,13 @@ interface WorkerProfileApiService {
         @Body request: WorkerModels.WorkerProfileRequest
     ): WorkerModels.WorkerProfileResponseWrapper
 
-    @GET("workers/profile/{userId}")
-    suspend fun getProfile(
-        @Path("userId") userId: String
-    ): WorkerModels.WorkerProfileResponse
+//    @GET("workers/profile/{userId}")
+//    suspend fun getProfile(
+//        @Path("userId") userId: String
+//    ): WorkerModels.WorkerProfileResponse
+
+    @GET("/api/workers/profile/user/{userId}")
+    suspend fun getProfile(@Path("userId") userId: String): Response<WorkerModels.WorkerProfileResponse>
 
     @PUT("workers/profile/{userId}")
     suspend fun updateProfile(

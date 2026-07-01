@@ -191,6 +191,17 @@ private fun WorkerDashboardHub(
             onClick = onProfileClick
         )
 
+        Column {
+            Text("Profile ${uiState.profileCompletionPercent}% complete")
+            LinearProgressIndicator(
+                progress = { uiState.profileCompletionPercent / 100f },
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (uiState.profileCompletionPercent < 100) {
+                TextButton(onClick = onProfileClick) { Text("Complete your profile") }
+            }
+        }
+
         // ── In-progress work section ─────────────────────────────────────
         Text("In Progress", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = KKTextPrimary)
         InProgressPlaceholder()
@@ -255,3 +266,4 @@ private fun WorkerProfilePlaceholder(onLogout: () -> Unit) {
         }
     }
 }
+
