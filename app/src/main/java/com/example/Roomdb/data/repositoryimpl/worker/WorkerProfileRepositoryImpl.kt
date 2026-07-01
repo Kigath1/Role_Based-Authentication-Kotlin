@@ -19,12 +19,6 @@ class WorkerProfileRepositoryImpl(
         api.createProfile(email, request).profile
     }
 
-//    override suspend fun getProfile(
-//        userId: String
-//    ): Result<WorkerModels.WorkerProfileResponse> = runCatching {
-//        api.getProfile(userId)
-//    }
-
     override suspend fun updateProfile(
         userId: String, request: WorkerModels.WorkerProfileRequest
     ): Result<WorkerModels.WorkerProfileResponse> = runCatching {

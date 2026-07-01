@@ -34,6 +34,7 @@ import com.example.Roomdb.domain.usecases.employer.GetWorkersUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
 import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.GetWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
@@ -70,6 +71,7 @@ class TestKonnectApplication : Application() {
     lateinit var uploadDocumentUseCase: UploadDocumentUseCase
     lateinit var checkWorkerProfileExistsUseCase: CheckWorkerProfileExistsUseCase
     lateinit var checkClientProfileExistsUseCase: CheckClientProfileExistsUseCase
+    lateinit var getWorkerProfileUseCase: GetWorkerProfileUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -139,6 +141,7 @@ class TestKonnectApplication : Application() {
             uploadDocumentUseCase = UploadDocumentUseCase(workerProfileRepository)
             checkWorkerProfileExistsUseCase = CheckWorkerProfileExistsUseCase(workerProfileRepository)
             checkClientProfileExistsUseCase = CheckClientProfileExistsUseCase(clientProfileRepository)
+            getWorkerProfileUseCase  = GetWorkerProfileUseCase(workerProfileRepository)
 
             android.util.Log.d("AppInit", "All use cases initialized successfully")
 

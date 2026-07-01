@@ -15,6 +15,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.Roomdb.navigation.AppNavHost
 import com.example.Roomdb.ui.view.common.chats.ChatScreen
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
@@ -105,10 +107,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private val workerDashboardViewModel: WorkerDashboardViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return WorkerDashboardViewModel(app.secureStore) as T
+        viewModelFactory {
+            initializer {
+                WorkerDashboardViewModel(
+                    secureStore = app.secureStore,
+                    getWorkerProfileUseCase = app.getWorkerProfileUseCase
+                )
             }
         }
     }

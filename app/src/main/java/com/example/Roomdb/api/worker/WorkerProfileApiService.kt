@@ -20,7 +20,7 @@ interface WorkerProfileApiService {
         @Body request: WorkerModels.WorkerProfileRequest
     ): WorkerModels.WorkerProfileResponseWrapper
 
-    @GET("/api/workers/profile/user/{userId}")
+    @GET("/api/workers/profile/{userId}")
     suspend fun getProfile(@Path("userId") userId: String): Response<WorkerModels.WorkerProfileResponse>
 
     @PUT("workers/profile/{userId}")

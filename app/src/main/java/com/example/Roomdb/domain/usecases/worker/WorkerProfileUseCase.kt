@@ -28,3 +28,9 @@ class CheckWorkerProfileExistsUseCase(
         return repository.getProfile(userId).map { it != null }
     }
 }
+
+class GetWorkerProfileUseCase(
+    private val repository: WorkerProfileRepository
+) {
+    suspend operator fun invoke(userId: String) = repository.getProfile(userId)
+}

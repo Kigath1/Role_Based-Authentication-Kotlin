@@ -56,12 +56,19 @@ object WorkerModels {
         val hourlyRate: Double? = null,
         val category: String? = null,
         val profilePictureUrl: String? = null,
-        val availabilityDetails: String? = null,
+        val availabilityDetails: AvailabilityDetails? = null,
         val skills: List<String> = emptyList(),
         val preferredLocations: List<String> = emptyList(),
         val workHistory: List<WorkHistoryEntry> = emptyList(),
         val certifications: List<Certification> = emptyList(),
         val status: String? = null
+    )
+
+    @Serializable
+    data class AvailabilityDetails(
+        val weekdays: Boolean = false,
+        val weekends: Boolean = false,
+        val evenings: Boolean = false
     )
 
     @Serializable
