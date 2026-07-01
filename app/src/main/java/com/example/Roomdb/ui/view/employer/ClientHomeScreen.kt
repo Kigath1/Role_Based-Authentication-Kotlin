@@ -1,5 +1,6 @@
 package com.example.Roomdb.ui.view
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,12 +19,15 @@ fun ClientHomeScreen(
     onLogout: () -> Unit,
     onOpenChat: (recipientId: String, recipientName: String) -> Unit
 ) {
-    // Wire the navigation callback into the ViewModel once
-    // so WorkerListCard's Message button can trigger navigation
     viewModel.onNavigateToChat = onOpenChat
 
     val uiState by viewModel.uiState.collectAsState()
     val selectedTabIndex = uiState.selectedTabIndex
+
+    BackHandler(enabled = selectedTabIndex != 0) {
+        viewModel.selectTab(0)
+    }
+
     val tabs = listOf("Home", "Workers", "Messages", "Profile")
 
     Scaffold(

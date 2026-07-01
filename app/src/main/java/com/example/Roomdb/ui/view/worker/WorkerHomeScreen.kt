@@ -23,6 +23,7 @@ import com.example.Roomdb.ui.theme.*
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
+import androidx.activity.compose.BackHandler
 
 private enum class WorkerTab(val label: String) {
     DASHBOARD("Dashboard"),
@@ -40,6 +41,11 @@ fun WorkerHomeScreen(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(WorkerTab.DASHBOARD) }
+
+    BackHandler(enabled = selectedTab != WorkerTab.DASHBOARD) {
+        selectedTab = WorkerTab.DASHBOARD
+    }
+
     val currentUser by authViewModel.currentUser.collectAsState()
     val chatState by chatListViewModel.uiState.collectAsState()
     val unreadCount = chatState.conversations.count { !it.isRead }

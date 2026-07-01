@@ -72,7 +72,7 @@ fun LoginScreen(
                 letterSpacing = (-1).sp
             )
             Text(
-                text = "Connect",
+                text = "Konnect",
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Light,
                 color = Color.White,
