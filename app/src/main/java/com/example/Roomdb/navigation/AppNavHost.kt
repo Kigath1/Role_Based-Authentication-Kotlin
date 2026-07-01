@@ -17,6 +17,7 @@ import com.example.Roomdb.ui.view.employer.ClientProfileSetupScreen
 import com.example.Roomdb.ui.view.worker.WorkerHomeScreen
 import com.example.Roomdb.ui.view.worker.WorkerOnboardingScreen
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
+import com.example.Roomdb.viewmodel.auth.PostLoginDestination
 import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
@@ -43,16 +44,28 @@ fun AppNavHost(
 
             // ── SPLASH ────────────────────────────────────────────────────
             entry<ScreenKey.Splash> {
+                val authState by authViewModel.authState.collectAsState()
+
                 LaunchedEffect(Unit) {
-                    val isLoggedIn = authViewModel.checkAutoLogin()
-                    val next = when {
-                        !isLoggedIn -> ScreenKey.Login
-                        authViewModel.getUserRole() == "WORKER" -> ScreenKey.WorkerHome
-                        else -> ScreenKey.ClientHome
-                    }
-                    backStack.removeLastOrNull()
-                    backStack.add(next)
+                    authViewModel.checkAutoLogin()
                 }
+
+                LaunchedEffect(authState.isCheckingAutoLogin, authState.destination) {
+                    if (!authState.isCheckingAutoLogin) {
+                        val next = when {
+                            !authState.isLoggedIn -> ScreenKey.Login
+                            authState.destination == PostLoginDestination.WorkerHome -> ScreenKey.WorkerHome
+                            authState.destination == PostLoginDestination.WorkerOnboarding -> ScreenKey.WorkerOnboarding
+                            authState.destination == PostLoginDestination.ClientHome -> ScreenKey.ClientHome
+                            authState.destination == PostLoginDestination.ClientProfileSetup -> ScreenKey.ClientProfileSetup
+                            else -> ScreenKey.Login
+                        }
+                        authViewModel.consumeDestination()
+                        backStack.removeLastOrNull()
+                        backStack.add(next)
+                    }
+                }
+
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
