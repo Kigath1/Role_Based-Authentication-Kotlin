@@ -24,9 +24,11 @@ import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
-import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
+import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
+import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
+import kotlin.getValue
 
 class MainActivity : ComponentActivity() {
 
@@ -43,7 +45,6 @@ class MainActivity : ComponentActivity() {
                     app.getUserRoleUseCase,
                     app.checkAuthStatusUseCase,
                     app.checkWorkerProfileExistsUseCase,
-                    app.checkClientProfileExistsUseCase,
                     app.secureStore
                 ) as T
             }
@@ -84,11 +85,27 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val clientProfileSetupViewModel: ClientProfileSetupViewModel by viewModels {
+    private val clientProfileViewModel: ClientProfileViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return ClientProfileSetupViewModel(app.createClientProfileUseCase) as T
+                return ClientProfileViewModel(
+                    app.getClientProfileUseCase,
+                    app.createClientProfileUseCase,
+                    app.updateClientProfileUseCase
+                ) as T
+            }
+        }
+    }
+
+    private val workerProfileViewModel: WorkerProfileViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return WorkerProfileViewModel(
+                    app.getWorkerProfileUseCase,
+                    app.updateWorkerProfileUseCase
+                ) as T
             }
         }
     }
@@ -129,14 +146,12 @@ class MainActivity : ComponentActivity() {
                         clientHomeViewModel = clientHomeViewModel,
                         chatListViewModel = chatListViewModel,
                         registrationViewModel = registrationViewModel,
-                        clientProfileSetupViewModel = clientProfileSetupViewModel,
+                        clientProfileViewModel = clientProfileViewModel,
                         workerOnboardingViewModel = workerOnboardingViewModel,
                         workerDashboardViewModel = workerDashboardViewModel,
+                        workerProfileViewModel = workerProfileViewModel,
 
-                        // ── CHAT — still external because ChatViewModel needs
-                        //    a per-entry factory keyed on recipientId/recipientName ──
                         chatContent = { recipientId, recipientName, onBack ->
-                            // ── Create a unique ViewModelStoreOwner for each chat ──────────────────
                             val viewModelStoreOwner = remember(recipientId) {
                                 object : ViewModelStoreOwner {
                                     override val viewModelStore = ViewModelStore()

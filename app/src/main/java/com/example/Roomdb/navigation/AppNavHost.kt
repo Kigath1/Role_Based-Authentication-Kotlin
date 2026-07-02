@@ -13,16 +13,16 @@ import com.example.Roomdb.ui.view.ClientHomeScreen
 import com.example.Roomdb.ui.view.auth.LoginScreen
 import com.example.Roomdb.ui.view.auth.RegistrationScreen
 import com.example.Roomdb.ui.view.auth.VerifyEmailScreen
-import com.example.Roomdb.ui.view.employer.ClientProfileSetupScreen
 import com.example.Roomdb.ui.view.worker.WorkerHomeScreen
 import com.example.Roomdb.ui.view.worker.WorkerOnboardingScreen
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.auth.PostLoginDestination
 import com.example.Roomdb.viewmodel.auth.RegistrationViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
-import com.example.Roomdb.viewmodel.employer.ClientProfileSetupViewModel
+import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
+import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
 
 @Composable
 fun AppNavHost(
@@ -31,9 +31,10 @@ fun AppNavHost(
     chatListViewModel: ChatListViewModel,
     chatContent: @Composable (recipientId: String, recipientName: String, onBack: () -> Unit) -> Unit,
     registrationViewModel: RegistrationViewModel,
-    clientProfileSetupViewModel: ClientProfileSetupViewModel,
+    clientProfileViewModel: ClientProfileViewModel,
     workerOnboardingViewModel: WorkerOnboardingViewModel,
-    workerDashboardViewModel: WorkerDashboardViewModel
+    workerDashboardViewModel: WorkerDashboardViewModel,
+    workerProfileViewModel: WorkerProfileViewModel
 ) {
     val backStack = rememberNavBackStack(ScreenKey.Splash)
 
@@ -57,7 +58,6 @@ fun AppNavHost(
                             authState.destination == PostLoginDestination.WorkerHome -> ScreenKey.WorkerHome
                             authState.destination == PostLoginDestination.WorkerOnboarding -> ScreenKey.WorkerOnboarding
                             authState.destination == PostLoginDestination.ClientHome -> ScreenKey.ClientHome
-                            authState.destination == PostLoginDestination.ClientProfileSetup -> ScreenKey.ClientProfileSetup
                             else -> ScreenKey.Login
                         }
                         authViewModel.consumeDestination()
@@ -105,10 +105,6 @@ fun AppNavHost(
                     onNavigateToClientHome = {
                         backStack.clear()
                         backStack.add(ScreenKey.ClientHome)
-                    },
-                    onNavigateToClientProfileSetup = {
-                        backStack.clear()
-                        backStack.add(ScreenKey.ClientProfileSetup)
                     }
                 )
             }
@@ -131,29 +127,6 @@ fun AppNavHost(
                         backStack.add(ScreenKey.Login)
                     }
                 )
-            }
-
-            // ── CLIENT PROFILE SETUP ──────────────────────────────────────
-            entry<ScreenKey.ClientProfileSetup> {
-                val currentUser by authViewModel.currentUser.collectAsState()
-                val state by clientProfileSetupViewModel.state.collectAsState()
-
-                LaunchedEffect(state.success) {
-                    if (state.success) {
-                        clientProfileSetupViewModel.consumeSuccess()
-                        backStack.clear()
-                        backStack.add(ScreenKey.ClientHome)
-                    }
-                }
-
-                currentUser?.let { user ->
-                    ClientProfileSetupScreen(
-                        viewModel = clientProfileSetupViewModel,
-                        email = user.email
-                    )
-                } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
             }
 
             // ── WORKER ONBOARDING ─────────────────────────────────────────
@@ -198,6 +171,7 @@ fun AppNavHost(
                     authViewModel = authViewModel,
                     dashboardViewModel = workerDashboardViewModel,
                     chatListViewModel = chatListViewModel,
+                    workerProfileViewModel = workerProfileViewModel,
                     onOpenChat = { recipientId, recipientName ->
                         backStack.add(ScreenKey.Chat(recipientId, recipientName))
                     },
@@ -215,6 +189,7 @@ fun AppNavHost(
             // ── CLIENT HOME ───────────────────────────────────────────────
             entry<ScreenKey.ClientHome> {
                 val authState by authViewModel.authState.collectAsState()
+                val currentUser by authViewModel.currentUser.collectAsState()
                 val currentUserId = authState.currentUserId
 
                 LaunchedEffect(currentUserId) {
@@ -227,6 +202,9 @@ fun AppNavHost(
                 ClientHomeScreen(
                     viewModel = clientHomeViewModel,
                     chatListViewModel = chatListViewModel,
+                    clientProfileViewModel = clientProfileViewModel,
+                    currentUserId = currentUserId,
+                    currentUserEmail = currentUser?.email ?: "",
                     onLogout = {
                         clientHomeViewModel.clearState()
                         chatListViewModel.clearState()

@@ -9,7 +9,6 @@ import com.example.Roomdb.domain.usecases.auth.GetCurrentUserUseCase
 import com.example.Roomdb.domain.usecases.auth.GetUserRoleUseCase
 import com.example.Roomdb.domain.usecases.auth.LoginUseCase
 import com.example.Roomdb.domain.usecases.auth.LogoutUseCase
-import com.example.Roomdb.domain.usecases.employer.CheckClientProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
 import com.example.Roomdb.data.local.SecureTokenDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +20,6 @@ sealed interface PostLoginDestination {
     data object WorkerHome : PostLoginDestination
     data object WorkerOnboarding : PostLoginDestination
     data object ClientHome : PostLoginDestination
-    data object ClientProfileSetup : PostLoginDestination
 }
 
 class AuthViewModel(
@@ -31,7 +29,6 @@ class AuthViewModel(
     private val getUserRoleUseCase: GetUserRoleUseCase,
     private val checkAuthStatusUseCase: CheckAuthStatusUseCase,
     private val checkWorkerProfileExistsUseCase: CheckWorkerProfileExistsUseCase,
-    private val checkClientProfileExistsUseCase: CheckClientProfileExistsUseCase,
     private val secureStore: SecureTokenDataStore
 ) : ViewModel() {
 
@@ -43,7 +40,7 @@ class AuthViewModel(
         val currentUserId: String = "",
         val currentUserEmail: String = "",
         val destination: PostLoginDestination? = null,
-        val isCheckingAutoLogin: Boolean = true  // NEW: to show splash loading
+        val isCheckingAutoLogin: Boolean = true  // shows splash loading
     )
 
     private val _authState = MutableStateFlow(AuthState())
@@ -62,7 +59,6 @@ class AuthViewModel(
         viewModelScope.launch {
             val result = loginUseCase(email, password)
             result.onSuccess { loginData ->
-                // ── Inject token ──────────────────────────────────────────
                 val token = secureStore.getAccessTokenOnce()
                 if (token != null) {
                     AuthTokenHolder.token = token
@@ -72,7 +68,6 @@ class AuthViewModel(
                 val role = getUserRoleUseCase()
                 _currentUser.value = user
 
-                // Determine destination based on role and profile existence
                 val destination = when (role?.uppercase()) {
                     "WORKER" -> {
                         val userId = user?.userId ?: ""
@@ -82,14 +77,9 @@ class AuthViewModel(
                         if (exists) PostLoginDestination.WorkerHome
                         else PostLoginDestination.WorkerOnboarding
                     }
-                    "CLIENT" -> {
-                        val userId = user?.userId ?: ""
-                        val exists = runCatching {
-                            checkClientProfileExistsUseCase(userId).getOrDefault(false)
-                        }.getOrDefault(false)
-                        if (exists) PostLoginDestination.ClientHome
-                        else PostLoginDestination.ClientProfileSetup
-                    }
+                    // Client always lands on ClientHome — the Profile tab detects
+                    // a missing profile and shows the create form itself.
+                    "CLIENT" -> PostLoginDestination.ClientHome
                     else -> null // shouldn't happen
                 }
 
@@ -129,7 +119,6 @@ class AuthViewModel(
                 val role = getUserRoleUseCase()
                 _currentUser.value = user
 
-                // Determine destination
                 val destination = when (role?.uppercase()) {
                     "WORKER" -> {
                         val userId = user?.userId ?: ""
@@ -139,14 +128,7 @@ class AuthViewModel(
                         if (exists) PostLoginDestination.WorkerHome
                         else PostLoginDestination.WorkerOnboarding
                     }
-                    "CLIENT" -> {
-                        val userId = user?.userId ?: ""
-                        val exists = runCatching {
-                            checkClientProfileExistsUseCase(userId).getOrDefault(false)
-                        }.getOrDefault(false)
-                        if (exists) PostLoginDestination.ClientHome
-                        else PostLoginDestination.ClientProfileSetup
-                    }
+                    "CLIENT" -> PostLoginDestination.ClientHome
                     else -> null
                 }
 
@@ -198,7 +180,7 @@ class AuthViewModel(
     fun logout(onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             logoutUseCase()
-            _authState.value = AuthState() // resets everything incl. isCheckingAutoLogin
+            _authState.value = AuthState()
             _currentUser.value = null
             onComplete()
         }

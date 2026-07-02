@@ -33,7 +33,6 @@ fun LoginScreen(
     onNavigateToWorkerHome: () -> Unit,
     onNavigateToWorkerOnboarding: () -> Unit,
     onNavigateToClientHome: () -> Unit,
-    onNavigateToClientProfileSetup: () -> Unit,
 ) {
     val state by viewModel.authState.collectAsState()
 
@@ -41,7 +40,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var showPass by remember { mutableStateOf(false) }
 
-    // ── Navigate when destination is set ──────────────────────────────
     LaunchedEffect(state.destination) {
         when (state.destination) {
             PostLoginDestination.WorkerHome -> {
@@ -55,10 +53,6 @@ fun LoginScreen(
             PostLoginDestination.ClientHome -> {
                 viewModel.consumeDestination()
                 onNavigateToClientHome()
-            }
-            PostLoginDestination.ClientProfileSetup -> {
-                viewModel.consumeDestination()
-                onNavigateToClientProfileSetup()
             }
             null -> { /* no-op */ }
         }
@@ -82,7 +76,6 @@ fun LoginScreen(
         ) {
             Spacer(Modifier.height(72.dp))
 
-            // ── Brand mark ───────────────────────────────────────────────
             Text(
                 text = "Kazi",
                 fontSize = 48.sp,
@@ -107,7 +100,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(48.dp))
 
-            // ── Card ─────────────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = CardSurface),
@@ -155,7 +147,6 @@ fun LoginScreen(
                         }
                     )
 
-                    // Error message
                     if (state.error != null) {
                         Spacer(Modifier.height(10.dp))
                         Text(
@@ -195,7 +186,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── Register link ────────────────────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {

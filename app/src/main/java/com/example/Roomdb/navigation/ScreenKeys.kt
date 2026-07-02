@@ -28,7 +28,6 @@ sealed interface ScreenKey : NavKey {
 
     @Serializable data object Registration        : ScreenKey
     @Serializable data object VerifyEmail         : ScreenKey
-    @Serializable data object ClientProfileSetup  : ScreenKey
 
     //WORKER ONBOARDING
 

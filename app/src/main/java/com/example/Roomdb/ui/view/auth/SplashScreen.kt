@@ -46,10 +46,6 @@ fun SplashScreen(
                 viewModel.consumeDestination()
                 onNavigateToClientHome()
             }
-            PostLoginDestination.ClientProfileSetup -> {
-                viewModel.consumeDestination()
-                onNavigateToClientProfileSetup()
-            }
             null -> { /* no‑op */ }
         }
     }

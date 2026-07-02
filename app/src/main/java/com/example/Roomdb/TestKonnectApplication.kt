@@ -28,10 +28,12 @@ import com.example.Roomdb.domain.usecases.auth.ResendVerificationUseCase
 import com.example.Roomdb.domain.usecases.auth.VerifyEmailUseCase
 import com.example.Roomdb.domain.usecases.employer.CheckClientProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.employer.CreateClientProfileUseCase
+import com.example.Roomdb.domain.usecases.employer.GetClientProfileUseCase
 import com.example.Roomdb.domain.usecases.employer.GetConversationUseCase
 import com.example.Roomdb.domain.usecases.employer.GetRecentConversationsUseCase
 import com.example.Roomdb.domain.usecases.employer.GetWorkersUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
+import com.example.Roomdb.domain.usecases.employer.UpdateClientProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.GetWorkerProfileUseCase
@@ -63,11 +65,12 @@ class TestKonnectApplication : Application() {
     lateinit var resendVerificationUseCase: ResendVerificationUseCase
 
     lateinit var createClientProfileUseCase: CreateClientProfileUseCase
+    lateinit var getClientProfileUseCase: GetClientProfileUseCase
+    lateinit var updateClientProfileUseCase: UpdateClientProfileUseCase
 
     lateinit var createWorkerProfileUseCase: CreateWorkerProfileUseCase
     lateinit var updateWorkerProfileUseCase: UpdateWorkerProfileUseCase
 
-    lateinit var workerDashboardViewModel: WorkerDashboardViewModel
     lateinit var uploadDocumentUseCase: UploadDocumentUseCase
     lateinit var checkWorkerProfileExistsUseCase: CheckWorkerProfileExistsUseCase
     lateinit var checkClientProfileExistsUseCase: CheckClientProfileExistsUseCase
@@ -132,6 +135,8 @@ class TestKonnectApplication : Application() {
             val clientProfileRepository: ClientProfileRepository =
                 ClientProfileRepositoryImpl(RetrofitInstance.clientProfileApi)
             createClientProfileUseCase = CreateClientProfileUseCase(clientProfileRepository)
+            getClientProfileUseCase = GetClientProfileUseCase(clientProfileRepository)
+            updateClientProfileUseCase = UpdateClientProfileUseCase(clientProfileRepository)
 
             // Worker profile
             val workerProfileRepository: WorkerProfileRepository =

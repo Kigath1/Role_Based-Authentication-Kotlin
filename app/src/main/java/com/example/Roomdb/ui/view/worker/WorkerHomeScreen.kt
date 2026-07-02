@@ -24,6 +24,7 @@ import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import androidx.activity.compose.BackHandler
+import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
 
 private enum class WorkerTab(val label: String) {
     DASHBOARD("Dashboard"),
@@ -38,7 +39,8 @@ fun WorkerHomeScreen(
     dashboardViewModel: WorkerDashboardViewModel,
     chatListViewModel: ChatListViewModel,
     onOpenChat: (recipientId: String, recipientName: String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    workerProfileViewModel: WorkerProfileViewModel
 ) {
     var selectedTab by remember { mutableStateOf(WorkerTab.DASHBOARD) }
 
@@ -108,7 +110,11 @@ fun WorkerHomeScreen(
                     emptyStateBody = "Clients will reach out here once they're interested in your services."
                 )
                 WorkerTab.JOBS -> WorkerJobsPlaceholder()
-                WorkerTab.PROFILE -> WorkerProfilePlaceholder(onLogout = onLogout)
+                WorkerTab.PROFILE -> WorkerProfileScreen(
+                    viewModel = workerProfileViewModel,
+                    currentUserId = currentUser?.userId ?: "",
+                    onLogout = onLogout
+                )
             }
         }
     }
@@ -191,16 +197,16 @@ private fun WorkerDashboardHub(
             onClick = onProfileClick
         )
 
-        Column {
-            Text("Profile ${uiState.profileCompletionPercent}% complete")
-            LinearProgressIndicator(
-                progress = { uiState.profileCompletionPercent / 100f },
-                modifier = Modifier.fillMaxWidth()
-            )
-            if (uiState.profileCompletionPercent < 100) {
-                TextButton(onClick = onProfileClick) { Text("Complete your profile") }
-            }
-        }
+//        Column {
+//            Text("Profile ${uiState.profileCompletionPercent}% complete")
+//            LinearProgressIndicator(
+//                progress = { uiState.profileCompletionPercent / 100f },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//            if (uiState.profileCompletionPercent < 100) {
+//                TextButton(onClick = onProfileClick) { Text("Complete your profile") }
+//            }
+//        }
 
         // ── In-progress work section ─────────────────────────────────────
         Text("In Progress", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = KKTextPrimary)

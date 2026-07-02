@@ -10,6 +10,7 @@ import com.example.Roomdb.ui.view.employer.ProfileTab
 import com.example.Roomdb.ui.view.common.chats.ChatListTab
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
+import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,6 +18,9 @@ fun ClientHomeScreen(
     viewModel: ClientHomeViewModel,
     chatListViewModel: ChatListViewModel,
     onLogout: () -> Unit,
+    clientProfileViewModel: ClientProfileViewModel,
+    currentUserId: String,
+    currentUserEmail: String,
     onOpenChat: (recipientId: String, recipientName: String) -> Unit
 ) {
     viewModel.onNavigateToChat = onOpenChat
@@ -63,7 +67,12 @@ fun ClientHomeScreen(
                     emptyStateTitle = "No messages yet",
                     emptyStateBody = "Go to the Workers tab and tap Message on any worker to start a conversation."
                 )
-                3 -> ProfileTab()
+                3 -> ProfileTab(
+                    viewModel = clientProfileViewModel,
+                    currentUserId = currentUserId,
+                    currentUserEmail = currentUserEmail,
+                    onLogout = onLogout
+                )
             }
         }
     }

@@ -8,6 +8,16 @@ class CreateClientProfileUseCase(private val repo: ClientProfileRepository) {
     ) = repo.createProfile(email, fullName, phoneNumber, location)
 }
 
+class GetClientProfileUseCase(private val repo: ClientProfileRepository) {
+    suspend operator fun invoke(userId: String) = repo.getProfile(userId)
+}
+
+class UpdateClientProfileUseCase(private val repo: ClientProfileRepository) {
+    suspend operator fun invoke(
+        userId: String, fullName: String, phoneNumber: String, location: String
+    ) = repo.updateProfile(userId, fullName, phoneNumber, location)
+}
+
 class CheckClientProfileExistsUseCase(
     private val repository: ClientProfileRepository
 ) {

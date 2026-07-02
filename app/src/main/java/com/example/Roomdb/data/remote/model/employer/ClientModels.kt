@@ -14,9 +14,12 @@ object ClientModels {
     @Serializable
     data class ClientProfileResponse(
         val id: String,
+        val userId: String? = null,
+        val username: String? = null,
+        val email: String,
         val fullName: String,
-        val email: String? = null,
-        val phoneNumber: String,
-        val location: String? = null
+        val phoneNumber: String? = null,
+        val location: String? = null,
+        val createdAt: String? = null
     )
 }
