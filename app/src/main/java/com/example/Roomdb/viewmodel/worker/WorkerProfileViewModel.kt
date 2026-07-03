@@ -2,7 +2,7 @@ package com.example.Roomdb.viewmodel.worker
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.Roomdb.data.remote.model.WorkerModels
+import com.example.Roomdb.data.remote.model.worker.WorkerModels
 import com.example.Roomdb.domain.usecases.worker.GetWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,12 +18,10 @@ data class WorkerProfileUiState(
     val saveSuccessMessage: String? = null,
     val showReapprovalDialog: Boolean = false,
 
-    // locked
     val id: String = "",
     val email: String = "",
     val status: String = "",
 
-    // editable
     val fullName: String = "",
     val phoneNumber: String = "",
     val bio: String = "",
@@ -37,7 +35,6 @@ data class WorkerProfileUiState(
     val availabilityWeekends: Boolean = false,
     val availabilityEvenings: Boolean = false,
 
-    // not shown/edited here — round-tripped as-is so Save doesn't wipe them
     val workHistory: List<WorkerModels.WorkHistoryEntry> = emptyList(),
     val certifications: List<WorkerModels.Certification> = emptyList(),
     val profilePictureUrl: String? = null
@@ -69,6 +66,7 @@ class WorkerProfileViewModel(
                     }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
+                        isEditing = false,   // ← the fix — always return to view mode on (re)load
                         id = profile.id,
                         email = profile.email ?: "",
                         status = profile.status ?: "DRAFT",
@@ -108,7 +106,6 @@ class WorkerProfileViewModel(
     fun onAvailabilityWeekendsChange(v: Boolean) { _uiState.value = _uiState.value.copy(availabilityWeekends = v) }
     fun onAvailabilityEveningsChange(v: Boolean) { _uiState.value = _uiState.value.copy(availabilityEvenings = v) }
 
-    // Tapping "Edit" shows the re-approval warning once, before entering edit mode.
     fun requestEdit() { _uiState.value = _uiState.value.copy(showReapprovalDialog = true) }
     fun confirmEditAfterWarning() {
         _uiState.value = _uiState.value.copy(showReapprovalDialog = false, isEditing = true, error = null)
@@ -116,6 +113,9 @@ class WorkerProfileViewModel(
     fun dismissReapprovalWarning() { _uiState.value = _uiState.value.copy(showReapprovalDialog = false) }
 
     fun cancelEditing() = loadProfile(userId)
+    fun clearState() {
+        _uiState.value = WorkerProfileUiState()
+    }
 
     fun clearError() { _uiState.value = _uiState.value.copy(error = null) }
     fun consumeSaveSuccess() { _uiState.value = _uiState.value.copy(saveSuccessMessage = null) }

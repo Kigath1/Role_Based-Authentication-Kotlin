@@ -114,15 +114,3 @@ private fun EditableOrLockedField(
 }
 
 
-
-//@Composable
-//fun ProfileTab() {
-//    Column(
-//        modifier = Modifier.fillMaxSize().padding(24.dp),
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Center
-//    ) {
-//        Text("👤 Employer Profile")
-//        Text("(Coming soon)")
-//    }
-//}

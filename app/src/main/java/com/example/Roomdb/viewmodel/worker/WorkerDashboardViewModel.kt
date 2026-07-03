@@ -3,7 +3,7 @@ package com.example.Roomdb.viewmodel.worker
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.Roomdb.data.local.SecureTokenDataStore
-import com.example.Roomdb.data.remote.model.WorkerModels
+import com.example.Roomdb.data.remote.model.worker.WorkerModels
 import com.example.Roomdb.domain.usecases.worker.GetWorkerProfileUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ data class WorkerDashboardUiState(
 
 class WorkerDashboardViewModel(
     private val secureStore: SecureTokenDataStore,
-    private val getWorkerProfileUseCase: GetWorkerProfileUseCase   // new dependency
+    private val getWorkerProfileUseCase: GetWorkerProfileUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkerDashboardUiState())
@@ -38,6 +38,10 @@ class WorkerDashboardViewModel(
                 }
             }
         }
+    }
+
+    fun setPendingJobRequestsCount(count: Int) {
+        _uiState.update { it.copy(pendingJobRequestsCount = count) }
     }
 
     fun clearState() {

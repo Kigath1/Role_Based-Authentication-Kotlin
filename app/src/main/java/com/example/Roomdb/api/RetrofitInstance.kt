@@ -2,9 +2,11 @@ package com.example.Roomdb.api
 
 
 import com.example.Roomdb.api.auth.AuthApiService
+import com.example.Roomdb.api.employer.ClientJobApiService
 import com.example.Roomdb.api.employer.ClientProfileApiService
 import com.example.Roomdb.api.employer.MessageApiService
 import com.example.Roomdb.api.employer.WorkerApiService
+import com.example.Roomdb.api.worker.WorkerJobApiService
 import com.example.Roomdb.api.worker.WorkerProfileApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -77,5 +79,12 @@ object RetrofitInstance {
     }
     val workerProfileApi: WorkerProfileApiService by lazy {
         buildRetrofit(requiresAuth = true).create(WorkerProfileApiService::class.java)
+    }
+    val clientJobApi: ClientJobApiService by lazy {
+        buildRetrofit(requiresAuth = true).create(ClientJobApiService::class.java)
+    }
+
+    val workerJobApi: WorkerJobApiService by lazy {
+        buildRetrofit(requiresAuth = true).create(WorkerJobApiService::class.java)
     }
 }

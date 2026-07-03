@@ -15,7 +15,8 @@ data class ClientHomeUiState(
     val workers: List<Worker> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val currentLocation: String? = null
+    val currentLocation: String? = null,
+    val selectedWorkerForHire: Worker? = null // drives JobRequestSheet visibility in WorkersTab
 )
 
 class ClientHomeViewModel(
@@ -25,12 +26,12 @@ class ClientHomeViewModel(
     private val _uiState = MutableStateFlow(ClientHomeUiState())
     val uiState: StateFlow<ClientHomeUiState> = _uiState.asStateFlow()
 
-    // Wired from ClientHomeScreen — navigates to ChatScreen
     var onNavigateToChat: ((recipientId: String, recipientName: String) -> Unit)? = null
 
     init {
         loadWorkers()
     }
+    // (removed duplicate `init { loadWorkers() }` block — was firing loadWorkers() twice on creation)
 
     fun selectTab(index: Int) { _uiState.update { it.copy(selectedTabIndex = index) } }
 
@@ -39,12 +40,8 @@ class ClientHomeViewModel(
         loadWorkers(forceRefresh = true)
     }
 
-    init {
-        loadWorkers()
-    }
-
     fun clearState() {
-        _uiState.value = ClientHomeUiState()  // resets to default, tab 0, empty workers
+        _uiState.value = ClientHomeUiState()
         onNavigateToChat = null
     }
 
@@ -67,8 +64,11 @@ class ClientHomeViewModel(
         onNavigateToChat?.invoke(worker.userId, worker.fullName)
     }
 
+    fun onHireClicked(worker: Worker) {
+        _uiState.update { it.copy(selectedWorkerForHire = worker) }
+    }
 
-    fun onHireClicked(workerId: String) {
-        // TODO: implement hire flow
+    fun dismissHireSheet() {
+        _uiState.update { it.copy(selectedWorkerForHire = null) }
     }
 }

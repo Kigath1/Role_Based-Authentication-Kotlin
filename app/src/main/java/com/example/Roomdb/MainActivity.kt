@@ -25,10 +25,12 @@ import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
+import com.example.Roomdb.viewmodel.employer.ClientJobsViewModel
+import com.example.Roomdb.viewmodel.employer.JobRequestViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
-import kotlin.getValue
+import com.example.Roomdb.viewmodel.worker.WorkerJobsViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -39,13 +41,9 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return AuthViewModel(
-                    app.loginUseCase,
-                    app.logoutUseCase,
-                    app.getCurrentUserUseCase,
-                    app.getUserRoleUseCase,
-                    app.checkAuthStatusUseCase,
-                    app.checkWorkerProfileExistsUseCase,
-                    app.secureStore
+                    app.loginUseCase, app.logoutUseCase, app.getCurrentUserUseCase,
+                    app.getUserRoleUseCase, app.checkAuthStatusUseCase,
+                    app.checkWorkerProfileExistsUseCase, app.secureStore
                 ) as T
             }
         }
@@ -64,10 +62,7 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return ChatListViewModel(
-                    app.getRecentConversationsUseCase,
-                    app.secureStore
-                ) as T
+                return ChatListViewModel(app.getRecentConversationsUseCase, app.secureStore) as T
             }
         }
     }
@@ -77,9 +72,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return RegistrationViewModel(
-                    app.registerUseCase,
-                    app.verifyEmailUseCase,
-                    app.resendVerificationUseCase
+                    app.registerUseCase, app.verifyEmailUseCase, app.resendVerificationUseCase
                 ) as T
             }
         }
@@ -90,9 +83,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return ClientProfileViewModel(
-                    app.getClientProfileUseCase,
-                    app.createClientProfileUseCase,
-                    app.updateClientProfileUseCase
+                    app.getClientProfileUseCase, app.createClientProfileUseCase, app.updateClientProfileUseCase
                 ) as T
             }
         }
@@ -102,10 +93,7 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return WorkerProfileViewModel(
-                    app.getWorkerProfileUseCase,
-                    app.updateWorkerProfileUseCase
-                ) as T
+                return WorkerProfileViewModel(app.getWorkerProfileUseCase, app.updateWorkerProfileUseCase) as T
             }
         }
     }
@@ -115,9 +103,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return WorkerOnboardingViewModel(
-                    app.createWorkerProfileUseCase,
-                    app.updateWorkerProfileUseCase,
-                    app.uploadDocumentUseCase
+                    app.createWorkerProfileUseCase, app.updateWorkerProfileUseCase, app.uploadDocumentUseCase
                 ) as T
             }
         }
@@ -130,6 +116,39 @@ class MainActivity : ComponentActivity() {
                     secureStore = app.secureStore,
                     getWorkerProfileUseCase = app.getWorkerProfileUseCase
                 )
+            }
+        }
+    }
+
+    // ── Job Requests — new ──────────────────────────────────────────────
+    private val clientJobsViewModel: ClientJobsViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return ClientJobsViewModel(
+                    app.getClientJobsUseCase, app.acceptCounterOfferUseCase, app.cancelJobUseCase
+                ) as T
+            }
+        }
+    }
+
+    private val workerJobsViewModel: WorkerJobsViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return WorkerJobsViewModel(
+                    app.getWorkerJobsUseCase, app.acceptJobUseCase, app.rejectJobUseCase,
+                    app.counterOfferUseCase, app.startJobUseCase, app.completeJobUseCase
+                ) as T
+            }
+        }
+    }
+
+    private val jobRequestViewModel: JobRequestViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return JobRequestViewModel(app.createJobRequestUseCase) as T
             }
         }
     }
@@ -150,6 +169,9 @@ class MainActivity : ComponentActivity() {
                         workerOnboardingViewModel = workerOnboardingViewModel,
                         workerDashboardViewModel = workerDashboardViewModel,
                         workerProfileViewModel = workerProfileViewModel,
+                        clientJobsViewModel = clientJobsViewModel,
+                        workerJobsViewModel = workerJobsViewModel,
+                        jobRequestViewModel = jobRequestViewModel,
 
                         chatContent = { recipientId, recipientName, onBack ->
                             val viewModelStoreOwner = remember(recipientId) {
@@ -157,7 +179,6 @@ class MainActivity : ComponentActivity() {
                                     override val viewModelStore = ViewModelStore()
                                 }
                             }
-
                             val chatViewModel: ChatViewModel = viewModel(
                                 viewModelStoreOwner = viewModelStoreOwner,
                                 factory = object : ViewModelProvider.Factory {
@@ -173,7 +194,6 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
-
                             ChatScreen(viewModel = chatViewModel, onBack = onBack)
                         }
                     )

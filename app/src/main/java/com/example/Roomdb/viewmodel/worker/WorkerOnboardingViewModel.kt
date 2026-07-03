@@ -2,7 +2,7 @@ package com.example.Roomdb.viewmodel.worker
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.Roomdb.data.remote.model.WorkerModels
+import com.example.Roomdb.data.remote.model.worker.WorkerModels
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.example.Roomdb.domain.usecases.worker.*
 import kotlinx.coroutines.flow.StateFlow

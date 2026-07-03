@@ -1,4 +1,4 @@
-package com.example.Roomdb.data.remote.model
+package com.example.Roomdb.data.remote.model.worker
 
 import kotlinx.serialization.Serializable
 

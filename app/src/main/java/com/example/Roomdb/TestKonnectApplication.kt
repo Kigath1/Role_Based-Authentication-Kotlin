@@ -15,28 +15,42 @@ import com.example.Roomdb.domain.usecases.auth.LogoutUseCase
 import com.example.Roomdb.data.local.db.AppDatabase
 import com.example.Roomdb.data.repository.WorkerRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.auth.RegistrationRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.employer.ClientJobRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.employer.ClientProfileRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.employer.MessageRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.worker.WorkerJobRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.worker.WorkerProfileRepositoryImpl
 import com.example.Roomdb.domain.repository.auth.RegistrationRepository
+import com.example.Roomdb.domain.repository.employer.ClientJobRepository
 import com.example.Roomdb.domain.repository.employer.ClientProfileRepository
 import com.example.Roomdb.domain.repository.employer.MessageRepository
 import com.example.Roomdb.domain.repository.employer.WorkerRepository
+import com.example.Roomdb.domain.repository.worker.WorkerJobRepository
 import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
 import com.example.Roomdb.domain.usecases.auth.RegisterUseCase
 import com.example.Roomdb.domain.usecases.auth.ResendVerificationUseCase
 import com.example.Roomdb.domain.usecases.auth.VerifyEmailUseCase
+import com.example.Roomdb.domain.usecases.employer.AcceptCounterOfferUseCase
+import com.example.Roomdb.domain.usecases.employer.CancelJobUseCase
 import com.example.Roomdb.domain.usecases.employer.CheckClientProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.employer.CreateClientProfileUseCase
+import com.example.Roomdb.domain.usecases.employer.CreateJobRequestUseCase
+import com.example.Roomdb.domain.usecases.employer.GetClientJobsUseCase
 import com.example.Roomdb.domain.usecases.employer.GetClientProfileUseCase
 import com.example.Roomdb.domain.usecases.employer.GetConversationUseCase
 import com.example.Roomdb.domain.usecases.employer.GetRecentConversationsUseCase
 import com.example.Roomdb.domain.usecases.employer.GetWorkersUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
 import com.example.Roomdb.domain.usecases.employer.UpdateClientProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.AcceptJobUseCase
 import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
+import com.example.Roomdb.domain.usecases.worker.CompleteJobUseCase
+import com.example.Roomdb.domain.usecases.worker.CounterOfferUseCase
 import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.GetWorkerJobsUseCase
 import com.example.Roomdb.domain.usecases.worker.GetWorkerProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.RejectJobUseCase
+import com.example.Roomdb.domain.usecases.worker.StartJobUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
@@ -75,6 +89,22 @@ class TestKonnectApplication : Application() {
     lateinit var checkWorkerProfileExistsUseCase: CheckWorkerProfileExistsUseCase
     lateinit var checkClientProfileExistsUseCase: CheckClientProfileExistsUseCase
     lateinit var getWorkerProfileUseCase: GetWorkerProfileUseCase
+
+
+    lateinit var clientJobRepository: ClientJobRepository
+    lateinit var workerJobRepository: WorkerJobRepository
+
+    lateinit var createJobRequestUseCase: CreateJobRequestUseCase
+    lateinit var acceptCounterOfferUseCase: AcceptCounterOfferUseCase
+    lateinit var cancelJobUseCase: CancelJobUseCase
+    lateinit var getClientJobsUseCase: GetClientJobsUseCase
+
+    lateinit var acceptJobUseCase: AcceptJobUseCase
+    lateinit var rejectJobUseCase: RejectJobUseCase
+    lateinit var counterOfferUseCase: CounterOfferUseCase
+    lateinit var startJobUseCase: StartJobUseCase
+    lateinit var completeJobUseCase: CompleteJobUseCase
+    lateinit var getWorkerJobsUseCase: GetWorkerJobsUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -147,6 +177,20 @@ class TestKonnectApplication : Application() {
             checkWorkerProfileExistsUseCase = CheckWorkerProfileExistsUseCase(workerProfileRepository)
             checkClientProfileExistsUseCase = CheckClientProfileExistsUseCase(clientProfileRepository)
             getWorkerProfileUseCase  = GetWorkerProfileUseCase(workerProfileRepository)
+
+            clientJobRepository = ClientJobRepositoryImpl(RetrofitInstance.clientJobApi)
+            createJobRequestUseCase = CreateJobRequestUseCase(clientJobRepository)
+            acceptCounterOfferUseCase = AcceptCounterOfferUseCase(clientJobRepository)
+            cancelJobUseCase = CancelJobUseCase(clientJobRepository)
+            getClientJobsUseCase = GetClientJobsUseCase(clientJobRepository)
+
+            workerJobRepository = WorkerJobRepositoryImpl(RetrofitInstance.workerJobApi)
+            acceptJobUseCase = AcceptJobUseCase(workerJobRepository)
+            rejectJobUseCase = RejectJobUseCase(workerJobRepository)
+            counterOfferUseCase = CounterOfferUseCase(workerJobRepository)
+            startJobUseCase = StartJobUseCase(workerJobRepository)
+            completeJobUseCase = CompleteJobUseCase(workerJobRepository)
+            getWorkerJobsUseCase = GetWorkerJobsUseCase(workerJobRepository)
 
             android.util.Log.d("AppInit", "All use cases initialized successfully")
 

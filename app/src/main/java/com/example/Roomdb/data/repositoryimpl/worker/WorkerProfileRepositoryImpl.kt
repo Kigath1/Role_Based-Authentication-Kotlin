@@ -2,7 +2,7 @@ package com.example.Roomdb.data.repositoryimpl.worker
 
 
 import com.example.Roomdb.api.worker.WorkerProfileApiService
-import com.example.Roomdb.data.remote.model.WorkerModels
+import com.example.Roomdb.data.remote.model.worker.WorkerModels
 import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody

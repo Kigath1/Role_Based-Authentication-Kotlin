@@ -1,6 +1,6 @@
 package com.example.Roomdb.api.worker
 
-import com.example.Roomdb.data.remote.model.WorkerModels
+import com.example.Roomdb.data.remote.model.worker.WorkerModels
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body

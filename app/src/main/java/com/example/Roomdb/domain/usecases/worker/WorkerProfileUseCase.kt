@@ -1,6 +1,6 @@
 package com.example.Roomdb.domain.usecases.worker
 
-import com.example.Roomdb.data.remote.model.WorkerModels
+import com.example.Roomdb.data.remote.model.worker.WorkerModels
 import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
 
 

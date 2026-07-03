@@ -11,17 +11,20 @@ import com.example.Roomdb.ui.view.common.chats.ChatListTab
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
+import com.example.Roomdb.viewmodel.employer.JobRequestViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientHomeScreen(
     viewModel: ClientHomeViewModel,
     chatListViewModel: ChatListViewModel,
-    onLogout: () -> Unit,
-    clientProfileViewModel: ClientProfileViewModel,
+    clientProfileViewModel: ClientProfileViewModel,   // was already missing here
+    jobRequestViewModel: JobRequestViewModel,          // new
     currentUserId: String,
     currentUserEmail: String,
-    onOpenChat: (recipientId: String, recipientName: String) -> Unit
+    onLogout: () -> Unit,
+    onOpenChat: (recipientId: String, recipientName: String) -> Unit,
+    onOpenJobRequests: () -> Unit
 ) {
     viewModel.onNavigateToChat = onOpenChat
 
@@ -56,9 +59,11 @@ fun ClientHomeScreen(
             }
 
             when (selectedTabIndex) {
-                0 -> HomeTab()
+                0 -> HomeTab(onOpenJobRequests = onOpenJobRequests)
                 1 -> WorkersTab(
                     viewModel = viewModel,
+                    jobRequestViewModel = jobRequestViewModel,
+                    currentUserId = currentUserId,
                     modifier = Modifier.weight(1f)
                 )
                 2 -> ChatListTab(

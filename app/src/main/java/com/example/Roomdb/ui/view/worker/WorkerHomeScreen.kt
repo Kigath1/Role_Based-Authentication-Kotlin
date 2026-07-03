@@ -23,8 +23,9 @@ import com.example.Roomdb.ui.theme.*
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
-import androidx.activity.compose.BackHandler
 import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
+import androidx.activity.compose.BackHandler
+import com.example.Roomdb.viewmodel.worker.WorkerJobsViewModel
 
 private enum class WorkerTab(val label: String) {
     DASHBOARD("Dashboard"),
@@ -38,9 +39,10 @@ fun WorkerHomeScreen(
     authViewModel: AuthViewModel,
     dashboardViewModel: WorkerDashboardViewModel,
     chatListViewModel: ChatListViewModel,
+    workerProfileViewModel: WorkerProfileViewModel,
+    workerJobsViewModel: WorkerJobsViewModel,
     onOpenChat: (recipientId: String, recipientName: String) -> Unit,
-    onLogout: () -> Unit,
-    workerProfileViewModel: WorkerProfileViewModel
+    onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(WorkerTab.DASHBOARD) }
 
@@ -134,7 +136,6 @@ private fun WorkerDashboardHub(
         modifier = Modifier.fillMaxSize().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // ── Top profile header ──────────────────────────────────────────
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier.size(56.dp).clip(CircleShape),
@@ -172,7 +173,6 @@ private fun WorkerDashboardHub(
             }
         }
 
-        // ── Quick-access cards ───────────────────────────────────────────
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DashboardCard(
                 modifier = Modifier.weight(1f),
@@ -197,18 +197,17 @@ private fun WorkerDashboardHub(
             onClick = onProfileClick
         )
 
-//        Column {
-//            Text("Profile ${uiState.profileCompletionPercent}% complete")
-//            LinearProgressIndicator(
-//                progress = { uiState.profileCompletionPercent / 100f },
-//                modifier = Modifier.fillMaxWidth()
-//            )
-//            if (uiState.profileCompletionPercent < 100) {
-//                TextButton(onClick = onProfileClick) { Text("Complete your profile") }
-//            }
-//        }
+        Column {
+            Text("Profile ${uiState.profileCompletionPercent}% complete")
+            LinearProgressIndicator(
+                progress = { uiState.profileCompletionPercent / 100f },
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (uiState.profileCompletionPercent < 100) {
+                TextButton(onClick = onProfileClick) { Text("Complete your profile") }
+            }
+        }
 
-        // ── In-progress work section ─────────────────────────────────────
         Text("In Progress", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = KKTextPrimary)
         InProgressPlaceholder()
     }
@@ -242,7 +241,6 @@ private fun DashboardCard(
 
 @Composable
 private fun InProgressPlaceholder() {
-    // Wired once job requests are built — placeholder per agreed sequencing
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
         contentAlignment = Alignment.Center
@@ -261,15 +259,3 @@ private fun WorkerJobsPlaceholder() {
         Text("Job requests coming soon", color = KKTextMuted)
     }
 }
-
-@Composable
-private fun WorkerProfilePlaceholder(onLogout: () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Profile screen coming soon", color = KKTextMuted)
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = onLogout) { Text("Logout") }
-        }
-    }
-}
-
