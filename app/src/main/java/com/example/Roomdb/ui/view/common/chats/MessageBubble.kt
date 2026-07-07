@@ -9,18 +9,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.Roomdb.data.model.employer.Message
 import com.example.Roomdb.domain.utils.DateFormatter
-import com.example.Roomdb.ui.theme.*
 
 @Composable
 fun MessageBubble(
     message: Message,
     isSent: Boolean
 ) {
+    val bubbleColor = if (isSent)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.surfaceContainerHighest
+
+    val textColor = if (isSent)
+        MaterialTheme.colorScheme.onPrimary
+    else
+        MaterialTheme.colorScheme.onSurface
+
+    val timeColor = if (isSent)
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = if (isSent) Alignment.End else Alignment.Start
@@ -36,21 +48,20 @@ fun MessageBubble(
                         bottomEnd = if (isSent) 4.dp else 16.dp
                     )
                 )
-                .background(if (isSent) SentBubble else ReceivedBubble)
+                .background(bubbleColor)
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Column {
                 Text(
                     text = message.content,
-                    fontSize = 14.sp,
-                    color = if (isSent) Color.White else KKTextPrimary,
-                    lineHeight = 20.sp
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
                     text = DateFormatter.toBubbleTime(message.sentAt),
-                    fontSize = 10.sp,
-                    color = if (isSent) Color.White.copy(alpha = 0.7f) else KKTextMuted
+                    style = MaterialTheme.typography.labelSmall,
+                    color = timeColor
                 )
             }
         }

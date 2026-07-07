@@ -3,9 +3,11 @@ package com.example.Roomdb.api.employer
 import com.example.Roomdb.data.remote.model.employer.ConversationResponse
 import com.example.Roomdb.data.remote.model.employer.MessageDto
 import com.example.Roomdb.data.remote.model.employer.SendMessageRequest
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -27,4 +29,9 @@ interface MessageApiService {
     suspend fun sendMessage(
         @Body request: SendMessageRequest
     ): MessageDto
+
+    @PUT("messages/{messageId}/read")
+    suspend fun markAsRead(
+        @Path("messageId") messageId: String
+    ): Response<Unit>
 }

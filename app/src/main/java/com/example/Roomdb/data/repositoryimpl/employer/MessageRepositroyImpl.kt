@@ -15,8 +15,6 @@ class MessageRepositoryImpl(
     override suspend fun getRecentConversations(userId: String): Result<List<RecentConversation>> {
         return try {
             val response = api.getRecentConversations(userId)
-            // Each item is the latest message with a contact.
-            // We derive otherUser from the perspective of the logged-in userId.
             val conversations = response.map { dto ->
                 val isSender = dto.senderId == userId
                 RecentConversation(
@@ -65,6 +63,17 @@ class MessageRepositoryImpl(
             Result.success(response.toMessage())
         } catch (e: Exception) {
             Log.e("MessageRepo", "sendMessage failed", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun markAsRead(messageId: String): Result<Unit> {
+        return try {
+            val response = api.markAsRead(messageId)
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("markAsRead failed: HTTP ${response.code()}"))
+        } catch (e: Exception) {
+            Log.e("MessageRepo", "markAsRead failed", e)
             Result.failure(e)
         }
     }

@@ -1,6 +1,5 @@
 package com.example.Roomdb.ui.view.common.chats
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,13 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.Roomdb.data.model.employer.Message
-import com.example.Roomdb.domain.utils.DateFormatter
-import com.example.Roomdb.ui.theme.*
 import com.example.Roomdb.viewmodel.common.chats.ChatViewModel
 import kotlinx.coroutines.launch
 
@@ -45,37 +39,45 @@ fun ChatScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
-                                .background(KKBlueLight),
+                                .background(MaterialTheme.colorScheme.primaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = viewModel.recipientName.take(2).uppercase(),
-                                fontSize = 13.sp,
+                                style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = KKBlue
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                         Spacer(Modifier.width(10.dp))
                         Text(
                             text = viewModel.recipientName,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->
@@ -91,7 +93,7 @@ fun ChatScreen(
                         Modifier.weight(1f).fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 else -> {
@@ -118,27 +120,37 @@ fun ChatScreen(
                 Text(
                     text = it,
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceBright)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
                     value = uiState.inputText,
                     onValueChange = { viewModel.onInputChanged(it) },
-                    placeholder = { Text("Type a message...") },
-                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Type your message...") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerLow,
+                            RoundedCornerShape(24.dp)
+                        ),
                     shape = RoundedCornerShape(24.dp),
                     maxLines = 4,
-                    enabled = !uiState.isSending
+                    enabled = !uiState.isSending,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primaryContainer,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
                 )
                 Spacer(Modifier.width(8.dp))
                 IconButton(
@@ -148,21 +160,26 @@ fun ChatScreen(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(
-                            if (uiState.inputText.isNotBlank()) KKBlue
-                            else Color(0xFFE0E0E0)
+                            if (uiState.inputText.isNotBlank())
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHighest
                         )
                 ) {
                     if (uiState.isSending) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             strokeWidth = 2.dp
                         )
                     } else {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
-                            tint = Color.White,
+                            tint = if (uiState.inputText.isNotBlank())
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -171,47 +188,3 @@ fun ChatScreen(
         }
     }
 }
-
-
-
-//@Composable
-//private fun MessageBubble(
-//    message: Message,
-//    isSent: Boolean
-//) {
-//    Column(
-//        modifier = Modifier.fillMaxWidth(),
-//        horizontalAlignment = if (isSent) Alignment.End else Alignment.Start
-//    ) {
-//        Box(
-//            modifier = Modifier
-//                .widthIn(max = 280.dp)
-//                .clip(
-//                    RoundedCornerShape(
-//                        topStart = 16.dp,
-//                        topEnd = 16.dp,
-//                        bottomStart = if (isSent) 16.dp else 4.dp,
-//                        bottomEnd = if (isSent) 4.dp else 16.dp
-//                    )
-//                )
-//                .background(if (isSent) SentBubble else ReceivedBubble)
-//                .padding(horizontal = 14.dp, vertical = 10.dp)
-//        ) {
-//            Column {
-//                Text(
-//                    text = message.content,
-//                    fontSize = 14.sp,
-//                    color = if (isSent) Color.White else KKTextPrimary,
-//                    lineHeight = 20.sp
-//                )
-//                Spacer(Modifier.height(3.dp))
-//                // ← DateFormatter replaces the old formatBubbleTime() private function
-//                Text(
-//                    text = DateFormatter.toBubbleTime(message.sentAt),
-//                    fontSize = 10.sp,
-//                    color = if (isSent) Color.White.copy(alpha = 0.7f) else KKTextMuted
-//                )
-//            }
-//        }
-//    }
-//}

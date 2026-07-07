@@ -187,6 +187,7 @@ class MainActivity : ComponentActivity() {
                                         return ChatViewModel(
                                             getConversationUseCase = app.getConversationUseCase,
                                             sendMessageUseCase = app.sendMessageUseCase,
+                                            markMessageAsReadUseCase = app.markMessageAsReadUseCase,
                                             secureStore = app.secureStore,
                                             recipientId = recipientId,
                                             recipientName = recipientName

@@ -1,5 +1,6 @@
 package com.example.Roomdb.ui.view.worker
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,16 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.Roomdb.ui.theme.*
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
-import androidx.activity.compose.BackHandler
 import com.example.Roomdb.viewmodel.worker.WorkerJobsViewModel
 
 private enum class WorkerTab(val label: String) {
@@ -62,12 +62,13 @@ fun WorkerHomeScreen(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 NavigationBarItem(
                     selected = selectedTab == WorkerTab.DASHBOARD,
                     onClick = { selectedTab = WorkerTab.DASHBOARD },
                     icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
-                    label = { Text(WorkerTab.DASHBOARD.label) }
+                    label = { Text(WorkerTab.DASHBOARD.label) },
+                    colors = kaziNavItemColors()
                 )
                 NavigationBarItem(
                     selected = selectedTab == WorkerTab.MESSAGES,
@@ -79,22 +80,26 @@ fun WorkerHomeScreen(
                             Icon(Icons.Outlined.Chat, contentDescription = null)
                         }
                     },
-                    label = { Text(WorkerTab.MESSAGES.label) }
+                    label = { Text(WorkerTab.MESSAGES.label) },
+                    colors = kaziNavItemColors()
                 )
                 NavigationBarItem(
                     selected = selectedTab == WorkerTab.JOBS,
                     onClick = { selectedTab = WorkerTab.JOBS },
                     icon = { Icon(Icons.Outlined.Work, contentDescription = null) },
-                    label = { Text(WorkerTab.JOBS.label) }
+                    label = { Text(WorkerTab.JOBS.label) },
+                    colors = kaziNavItemColors()
                 )
                 NavigationBarItem(
                     selected = selectedTab == WorkerTab.PROFILE,
                     onClick = { selectedTab = WorkerTab.PROFILE },
                     icon = { Icon(Icons.Outlined.AccountCircle, contentDescription = null) },
-                    label = { Text(WorkerTab.PROFILE.label) }
+                    label = { Text(WorkerTab.PROFILE.label) },
+                    colors = kaziNavItemColors()
                 )
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (selectedTab) {
@@ -111,7 +116,10 @@ fun WorkerHomeScreen(
                     emptyStateTitle = "No messages yet",
                     emptyStateBody = "Clients will reach out here once they're interested in your services."
                 )
-                WorkerTab.JOBS -> WorkerJobsPlaceholder()
+                WorkerTab.JOBS -> WorkerJobsTab(
+                    viewModel = workerJobsViewModel,
+                    currentUserId = currentUser?.userId ?: ""
+                )
                 WorkerTab.PROFILE -> WorkerProfileScreen(
                     viewModel = workerProfileViewModel,
                     currentUserId = currentUser?.userId ?: "",
@@ -121,6 +129,20 @@ fun WorkerHomeScreen(
         }
     }
 }
+
+@Composable
+private fun kaziNavItemColors() = NavigationBarItemDefaults.colors(
+    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.primary,
+    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+)
+
+// ─────────────────────────────────────────────────────────────
+// Dashboard hub — restyled to the Kazi.Konnect visual language,
+// using only the fields WorkerDashboardViewModel actually exposes.
+// ─────────────────────────────────────────────────────────────
 
 @Composable
 private fun WorkerDashboardHub(
@@ -133,12 +155,18 @@ private fun WorkerDashboardHub(
     val uiState by dashboardViewModel.uiState.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // Greeting header
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(56.dp).clip(CircleShape),
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 if (!uiState.profilePictureUrl.isNullOrEmpty()) {
@@ -149,39 +177,46 @@ private fun WorkerDashboardHub(
                     )
                 } else {
                     Box(
-                        modifier = Modifier.fillMaxSize().background(KKBlueLight),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             uiState.name.take(2).uppercase(),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = KKBlue
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
             }
             Spacer(Modifier.width(12.dp))
             Column {
-                Text("Welcome back,", fontSize = 13.sp, color = KKTextMuted)
+                Text(
+                    "Welcome back,",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Text(
                     uiState.name.ifBlank { "Worker" },
-                    fontSize = 19.sp,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = KKTextPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
 
+        // Bento row — Messages + Job Requests
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            DashboardCard(
+            DashboardBentoCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Outlined.Chat,
                 label = "Messages",
                 badgeCount = unreadMessagesCount,
                 onClick = onMessagesClick
             )
-            DashboardCard(
+            DashboardBentoCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Outlined.Work,
                 label = "Job Requests",
@@ -189,73 +224,129 @@ private fun WorkerDashboardHub(
                 onClick = onJobsClick
             )
         }
-        DashboardCard(
+
+        // Full-width profile card
+        DashboardBentoCard(
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Outlined.AccountCircle,
             label = "My Profile",
             badgeCount = 0,
-            onClick = onProfileClick
+            onClick = onProfileClick,
+            fullWidth = true
         )
 
-        Column {
-            Text("Profile ${uiState.profileCompletionPercent}% complete")
+        // Profile completion
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Profile completeness",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "${uiState.profileCompletionPercent}%",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+            Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { uiState.profileCompletionPercent / 100f },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHigh
             )
             if (uiState.profileCompletionPercent < 100) {
-                TextButton(onClick = onProfileClick) { Text("Complete your profile") }
+                TextButton(onClick = onProfileClick, contentPadding = PaddingValues(top = 8.dp)) {
+                    Text("Complete your profile", color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
 
-        Text("In Progress", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = KKTextPrimary)
+        Text(
+            "In Progress",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
         InProgressPlaceholder()
     }
 }
 
 @Composable
-private fun DashboardCard(
+private fun DashboardBentoCard(
     modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
     badgeCount: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    fullWidth: Boolean = false
 ) {
-    Surface(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        color = KKBlueLight
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .clickable { onClick() }
+            .padding(16.dp)
     ) {
-        Box(modifier = Modifier.padding(16.dp)) {
-            Column {
-                Icon(icon, contentDescription = null, tint = KKBlue, modifier = Modifier.size(28.dp))
-                Spacer(Modifier.height(8.dp))
-                Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = KKTextPrimary)
+        if (fullWidth) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BentoIconBadge(icon)
+                Spacer(Modifier.width(12.dp))
+                Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             }
-            if (badgeCount > 0) {
-                Badge(modifier = Modifier.align(Alignment.TopEnd)) { Text("$badgeCount") }
+        } else {
+            Column {
+                BentoIconBadge(icon)
+                Spacer(Modifier.height(12.dp))
+                Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             }
         }
+        if (badgeCount > 0) {
+            Badge(
+                containerColor = MaterialTheme.colorScheme.error,
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) { Text("$badgeCount") }
+        }
+    }
+}
+
+@Composable
+private fun BentoIconBadge(icon: ImageVector) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 
 @Composable
 private fun InProgressPlaceholder() {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(vertical = 32.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             "No active jobs right now.",
-            fontSize = 13.sp,
-            color = KKTextMuted
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-private fun WorkerJobsPlaceholder() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Job requests coming soon", color = KKTextMuted)
     }
 }

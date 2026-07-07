@@ -37,3 +37,9 @@ class SendMessageUseCase(private val repository: MessageRepository) {
     ): Result<Message> =
         repository.sendMessage(senderId, receiverId, content)
 }
+
+
+class MarkMessageAsReadUseCase(private val repository: MessageRepository) {
+    suspend operator fun invoke(messageId: String): Result<Unit> =
+        repository.markAsRead(messageId)
+}

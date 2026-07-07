@@ -40,6 +40,7 @@ import com.example.Roomdb.domain.usecases.employer.GetClientProfileUseCase
 import com.example.Roomdb.domain.usecases.employer.GetConversationUseCase
 import com.example.Roomdb.domain.usecases.employer.GetRecentConversationsUseCase
 import com.example.Roomdb.domain.usecases.employer.GetWorkersUseCase
+import com.example.Roomdb.domain.usecases.employer.MarkMessageAsReadUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
 import com.example.Roomdb.domain.usecases.employer.UpdateClientProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.AcceptJobUseCase
@@ -72,6 +73,7 @@ class TestKonnectApplication : Application() {
     lateinit var getRecentConversationsUseCase: GetRecentConversationsUseCase
     lateinit var getConversationUseCase: GetConversationUseCase
     lateinit var sendMessageUseCase: SendMessageUseCase
+    lateinit var markMessageAsReadUseCase: MarkMessageAsReadUseCase
 
 
     lateinit var registerUseCase: RegisterUseCase
@@ -153,6 +155,7 @@ class TestKonnectApplication : Application() {
             getRecentConversationsUseCase = GetRecentConversationsUseCase(messageRepository)
             getConversationUseCase = GetConversationUseCase(messageRepository)
             sendMessageUseCase = SendMessageUseCase(messageRepository)
+            markMessageAsReadUseCase = MarkMessageAsReadUseCase(messageRepository)
 
             // Registration
             val registrationRepository: RegistrationRepository =
