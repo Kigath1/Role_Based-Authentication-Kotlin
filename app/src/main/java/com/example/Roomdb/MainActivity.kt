@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity() {
                 @Suppress("UNCHECKED_CAST")
                 return WorkerJobsViewModel(
                     app.getWorkerJobsUseCase, app.acceptJobUseCase, app.rejectJobUseCase,
-                    app.counterOfferUseCase, app.startJobUseCase, app.completeJobUseCase
+                    app.counterOfferUseCase, app.startJobUseCase, app.completeJobUseCase, app.checkPaymentStatusUseCase
                 ) as T
             }
         }

@@ -1,5 +1,6 @@
 package com.example.Roomdb.domain.usecases.worker
 
+import com.example.Roomdb.data.model.PaymentStatus
 import com.example.Roomdb.domain.repository.worker.WorkerJobRepository
 
 class AcceptJobUseCase(private val repo: WorkerJobRepository) {
@@ -24,4 +25,12 @@ class CompleteJobUseCase(private val repo: WorkerJobRepository) {
 
 class GetWorkerJobsUseCase(private val repo: WorkerJobRepository) {
     suspend operator fun invoke(workerUserId: String) = repo.getWorkerJobs(workerUserId)
+}
+
+class CheckPaymentStatusUseCase(
+    private val repository: WorkerJobRepository
+) {
+    suspend operator fun invoke(jobId: String): Result<PaymentStatus> {
+        return repository.checkPaymentStatus(jobId)
+    }
 }

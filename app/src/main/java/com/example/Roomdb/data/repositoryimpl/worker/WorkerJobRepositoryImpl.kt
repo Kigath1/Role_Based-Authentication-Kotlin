@@ -2,6 +2,7 @@ package com.example.Roomdb.data.repositoryimpl.worker
 
 import com.example.Roomdb.api.worker.WorkerJobApiService
 import com.example.Roomdb.data.model.Job
+import com.example.Roomdb.data.model.PaymentStatus
 import com.example.Roomdb.domain.repository.worker.WorkerJobRepository
 
 class WorkerJobRepositoryImpl(
@@ -30,5 +31,10 @@ class WorkerJobRepositoryImpl(
 
     override suspend fun getWorkerJobs(workerUserId: String): Result<List<Job>> = runCatching {
         api.getWorkerJobs(workerUserId).map { Job.fromDto(it) }
+    }.recoverCatching { throw Exception(it.message) }
+
+    override suspend fun checkPaymentStatus(jobId: String): Result<PaymentStatus> = runCatching {
+        val response = api.getPaymentStatus(jobId)
+        PaymentStatus.fromApi(response.status)
     }.recoverCatching { throw Exception(it.message) }
 }

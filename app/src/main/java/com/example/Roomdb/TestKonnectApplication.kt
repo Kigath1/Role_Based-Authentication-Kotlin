@@ -44,6 +44,7 @@ import com.example.Roomdb.domain.usecases.employer.MarkMessageAsReadUseCase
 import com.example.Roomdb.domain.usecases.employer.SendMessageUseCase
 import com.example.Roomdb.domain.usecases.employer.UpdateClientProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.AcceptJobUseCase
+import com.example.Roomdb.domain.usecases.worker.CheckPaymentStatusUseCase
 import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.worker.CompleteJobUseCase
 import com.example.Roomdb.domain.usecases.worker.CounterOfferUseCase
@@ -107,6 +108,7 @@ class TestKonnectApplication : Application() {
     lateinit var startJobUseCase: StartJobUseCase
     lateinit var completeJobUseCase: CompleteJobUseCase
     lateinit var getWorkerJobsUseCase: GetWorkerJobsUseCase
+    lateinit var checkPaymentStatusUseCase: CheckPaymentStatusUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -194,7 +196,7 @@ class TestKonnectApplication : Application() {
             startJobUseCase = StartJobUseCase(workerJobRepository)
             completeJobUseCase = CompleteJobUseCase(workerJobRepository)
             getWorkerJobsUseCase = GetWorkerJobsUseCase(workerJobRepository)
-
+            checkPaymentStatusUseCase = CheckPaymentStatusUseCase(workerJobRepository)
             android.util.Log.d("AppInit", "All use cases initialized successfully")
 
         } catch (e: Exception) {

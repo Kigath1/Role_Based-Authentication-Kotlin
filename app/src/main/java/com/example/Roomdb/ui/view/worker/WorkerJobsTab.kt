@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.Roomdb.data.model.JobStatus
+import com.example.Roomdb.data.model.PaymentStatus
 import com.example.Roomdb.ui.view.common.cards.JobCard
 import com.example.Roomdb.viewmodel.employer.JobFilter
 import com.example.Roomdb.viewmodel.worker.WorkerJobsViewModel
@@ -29,11 +31,15 @@ fun WorkerJobsTab(
         if (currentUserId.isNotBlank()) viewModel.loadJobs(currentUserId)
     }
     LaunchedEffect(state.error) {
-        state.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+        state.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize()) {
+            // Filter Row with Payment Badge
             Row(
                 Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -41,7 +47,20 @@ fun WorkerJobsTab(
                 FilterChip(
                     selected = state.filter == JobFilter.ACTIVE,
                     onClick = { viewModel.setFilter(JobFilter.ACTIVE) },
-                    label = { Text("Active") },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Active")
+                            if (state.waitingForPaymentCount > 0) {
+                                Spacer(Modifier.width(4.dp))
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ) {
+                                    Text(state.waitingForPaymentCount.toString())
+                                }
+                            }
+                        }
+                    },
                     shape = RoundedCornerShape(50),
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primary,
@@ -65,8 +84,8 @@ fun WorkerJobsTab(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
                 state.filteredJobs.isEmpty() -> EmptyJobsState(
-                    message = if (state.filter == JobFilter.ACTIVE) "No incoming requests yet."
-                    else "No completed jobs yet."
+                    message = if (state.filter == JobFilter.ACTIVE) "No active jobs."
+                    else "No completed jobs."
                 )
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -76,54 +95,137 @@ fun WorkerJobsTab(
                         var showCounterField by remember(job.id) { mutableStateOf(false) }
                         var counterPrice by remember(job.id) { mutableStateOf("") }
 
+                        // Get payment status for this job
+                        val paymentStatus = state.paymentStatusMap[job.id]
+
                         JobCard(
                             job = job,
                             counterpartyLabel = "Client",
-                            isActionInProgress = state.actionInProgressJobId == job.id
+                            isActionInProgress = state.actionInProgressJobId == job.id,
+                            paymentStatus = paymentStatus
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                when (job.status.name) {
-                                    "PENDING" -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                when (job.status) {
+                                    JobStatus.PENDING -> {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Button(
+                                                onClick = { viewModel.acceptJob(job.id) },
+                                                shape = RoundedCornerShape(10.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                                )
+                                            ) { Text("Accept") }
+                                            OutlinedButton(
+                                                onClick = { viewModel.rejectJob(job.id) },
+                                                shape = RoundedCornerShape(10.dp),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    contentColor = MaterialTheme.colorScheme.error
+                                                )
+                                            ) { Text("Reject") }
+                                            OutlinedButton(
+                                                onClick = { showCounterField = !showCounterField },
+                                                shape = RoundedCornerShape(10.dp)
+                                            ) { Text("Counter") }
+                                        }
+                                    }
+
+                                    JobStatus.ACCEPTED, JobStatus.APPROVED -> {
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            // Payment status indicator
+                                            PaymentStatusIndicator(paymentStatus)
+
+                                            when (paymentStatus) {
+                                                PaymentStatus.PAID -> {
+                                                    Button(
+                                                        onClick = { viewModel.startJob(job.id) },
+                                                        shape = RoundedCornerShape(10.dp),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = MaterialTheme.colorScheme.primary,
+                                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                                        ),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) { Text("Start Job") }
+                                                }
+                                                PaymentStatus.NO_PAYMENT -> {
+                                                    Text(
+                                                        text = "⏳ Waiting for employer to fund escrow...",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.padding(vertical = 4.dp)
+                                                    )
+                                                }
+                                                else -> {
+                                                    // Still checking or unknown status
+                                                    Text(
+                                                        text = "Checking payment status...",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.padding(vertical = 4.dp)
+                                                    )
+                                                    // Show a disabled Start Job button or just the status
+                                                    Button(
+                                                        onClick = { /* Disabled */ },
+                                                        shape = RoundedCornerShape(10.dp),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        ),
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        enabled = false
+                                                    ) { Text("Start Job") }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    JobStatus.IN_PROGRESS -> {
                                         Button(
-                                            onClick = { viewModel.acceptJob(job.id) },
+                                            onClick = { viewModel.completeJob(job.id) },
                                             shape = RoundedCornerShape(10.dp),
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.primary,
-                                                contentColor = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        ) { Text("Accept") }
-                                        OutlinedButton(
-                                            onClick = { viewModel.rejectJob(job.id) },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = MaterialTheme.colorScheme.error
-                                            )
-                                        ) { Text("Reject") }
-                                        OutlinedButton(
-                                            onClick = { showCounterField = !showCounterField },
-                                            shape = RoundedCornerShape(10.dp)
-                                        ) { Text("Counter") }
+                                                containerColor = MaterialTheme.colorScheme.secondary,
+                                                contentColor = MaterialTheme.colorScheme.onSecondary
+                                            ),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) { Text("Mark Complete") }
                                     }
-                                    "ACCEPTED" -> Button(
-                                        onClick = { viewModel.startJob(job.id) },
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary
+
+                                    JobStatus.COMPLETED -> {
+                                        // Show completed status with no actions
+                                        Text(
+                                            text = "✅ Job completed",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(vertical = 4.dp)
                                         )
-                                    ) { Text("Start Job") }
-                                    "IN_PROGRESS" -> Button(
-                                        onClick = { viewModel.completeJob(job.id) },
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.secondary,
-                                            contentColor = MaterialTheme.colorScheme.onSecondary
+                                    }
+
+                                    JobStatus.REJECTED -> {
+                                        Text(
+                                            text = "❌ Job rejected",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.padding(vertical = 4.dp)
                                         )
-                                    ) { Text("Mark Complete") }
-                                    else -> {}
+                                    }
+
+                                    JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED -> {
+                                        Text(
+                                            text = "🚫 Job cancelled",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.padding(vertical = 4.dp)
+                                        )
+                                    }
+
+                                    else -> {
+                                        // Unknown status - show nothing
+                                    }
                                 }
 
-                                if (showCounterField) {
+                                // Counter offer field (only for PENDING)
+                                if (showCounterField && job.status == JobStatus.PENDING) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -137,7 +239,9 @@ fun WorkerJobsTab(
                                         )
                                         Button(
                                             onClick = {
-                                                counterPrice.toDoubleOrNull()?.let { viewModel.counterOffer(job.id, it) }
+                                                counterPrice.toDoubleOrNull()?.let {
+                                                    viewModel.counterOffer(job.id, it)
+                                                }
                                                 showCounterField = false
                                             },
                                             enabled = counterPrice.toDoubleOrNull() != null,
@@ -155,8 +259,153 @@ fun WorkerJobsTab(
                 }
             }
         }
+
         SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+
+        // Show payment waiting dialog
+        state.showPaymentWaitingDialog?.let { jobId ->
+            PaymentWaitingDialog(
+                jobId = jobId,
+                onDismiss = { viewModel.dismissPaymentWaitingDialog() }
+            )
+        }
     }
+}
+
+@Composable
+private fun PaymentStatusIndicator(paymentStatus: PaymentStatus?) {
+    when (paymentStatus) {
+        PaymentStatus.NO_PAYMENT -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "⏳ Waiting for employer to fund escrow...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        PaymentStatus.PAID -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "✅ Payment confirmed! Ready to start.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        PaymentStatus.PENDING, PaymentStatus.WAITING -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "⏳ Payment in progress...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        PaymentStatus.RELEASED -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "💰 Payment released to worker",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        PaymentStatus.FAILED -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "❌ Payment failed",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        PaymentStatus.REFUNDED -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "↩️ Payment refunded",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        PaymentStatus.DISPUTED -> {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "⚠️ Payment in dispute",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        null -> {
+            // No payment status available yet
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "🔄 Loading payment status...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        else -> {
+            // Unknown payment status
+        }
+    }
+}
+
+@Composable
+private fun PaymentWaitingDialog(
+    jobId: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Waiting for Payment")
+            }
+        },
+        text = {
+            Column {
+                Text("Job accepted! The employer has been notified to fund the escrow.")
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "The job will automatically become available to start once payment is confirmed.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "This may take a few minutes. You can check back later.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("Got it")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 
 @Composable
