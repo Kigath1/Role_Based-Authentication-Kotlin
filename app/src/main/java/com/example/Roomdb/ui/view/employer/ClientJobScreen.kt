@@ -10,7 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.Roomdb.ui.view.common.cards.JobCard
+import com.example.Roomdb.ui.view.common.cards.EmployerJobCard
 import com.example.Roomdb.viewmodel.employer.ClientJobsViewModel
 import com.example.Roomdb.viewmodel.employer.JobFilter
 
@@ -49,24 +49,16 @@ fun ClientJobsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.filteredJobs, key = { it.id }) { job ->
-                        JobCard(
+                        EmployerJobCard(
                             job = job,
-                            counterpartyLabel = "Worker",
-                            isActionInProgress = state.actionInProgressJobId == job.id
-                        ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (job.negotiatedPrice != null) {
-                                    Button(onClick = { viewModel.acceptCounterOffer(job.id) }) {
-                                        Text("Accept Counter-Offer")
-                                    }
-                                }
-                                if (job.isActive) {
-                                    OutlinedButton(onClick = { viewModel.cancelJob(job.id) }) {
-                                        Text("Cancel")
-                                    }
-                                }
-                            }
-                        }
+                            isActionInProgress = state.actionInProgressJobId == job.id,
+                            onAcceptCounterOffer = { viewModel.acceptCounterOffer(job.id) },
+                            onCancelJob = { viewModel.cancelJob(job.id) },
+                            onViewReceipt = { /* Navigate to receipt */ },
+                            onViewDetails = { /* Navigate to job details */ },
+                            onReleasePayment = { /* Handle release payment */ },
+                            onRefundPayment = { /* Handle refund payment */ }
+                        )
                     }
                 }
             }

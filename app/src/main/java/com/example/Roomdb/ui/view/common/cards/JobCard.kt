@@ -5,10 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,20 +21,39 @@ import com.example.Roomdb.data.model.PaymentStatus
 @Composable
 fun JobCard(
     job: Job,
-    counterpartyLabel: String,
     isActionInProgress: Boolean,
     paymentStatus: PaymentStatus? = null,
-    actions: @Composable () -> Unit
+    onAccept: () -> Unit = {},
+    onReject: () -> Unit = {},
+    onCounter: (Double) -> Unit = {},
+    onStart: () -> Unit = {},
+    onComplete: () -> Unit = {},
+    onWithdraw: () -> Unit = {},
+    onViewReceipt: () -> Unit = {},
+    onViewDetails: () -> Unit = {}
 ) {
     val accentColor = statusAccentColor(job.status)
+    val isFinished = job.status in setOf(JobStatus.COMPLETED, JobStatus.APPROVED)
+    val isPending = job.status == JobStatus.PENDING
+    val isAccepted = job.status == JobStatus.ACCEPTED
+    val isInProgress = job.status == JobStatus.IN_PROGRESS
+    val isCompleted = job.status == JobStatus.COMPLETED
+    val isApproved = job.status == JobStatus.APPROVED
+    val isRejected = job.status == JobStatus.REJECTED
+    val isCancelled = job.status in setOf(JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED)
 
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        color = if (isFinished) {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLowest
+        },
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(Modifier.fillMaxWidth()) {
+            // Left accent strip
             Box(
                 modifier = Modifier
                     .width(4.dp)
@@ -47,6 +67,7 @@ fun JobCard(
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // ── Header Row: Description + Status ──
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -56,88 +77,134 @@ fun JobCard(
                         job.description,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (isFinished) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(Modifier.width(8.dp))
                     StatusChip(job.status, paymentStatus)
                 }
 
-                job.location?.let {
-                    InfoRow(icon = Icons.Outlined.LocationOn, text = it)
-                }
-                job.scheduledDate?.let {
-                    InfoRow(icon = Icons.Outlined.CalendarToday, text = it)
+                // ── Client Name ──
+                job.client?.fullName?.let { clientName ->
+                    InfoRow(
+                        icon = Icons.Outlined.Person,
+                        text = "Client: $clientName"
+                    )
                 }
 
+                // ── Location ──
+                job.location?.let { location ->
+                    InfoRow(
+                        icon = Icons.Outlined.LocationOn,
+                        text = location
+                    )
+                }
+
+                // ── Scheduled Date ──
+                job.scheduledDate?.let { date ->
+                    InfoRow(
+                        icon = Icons.Outlined.CalendarToday,
+                        text = date
+                    )
+                }
+
+                // ── Price ──
                 val displayPrice = job.negotiatedPrice ?: job.jobPrice ?: job.totalCost
                 displayPrice?.let {
                     Text(
-                        "KSh ${it.toInt()}",
+                        "💰 KSh ${formatPrice(it)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
 
-                job.paymentAmount?.let {
-                    if (it > 0 && job.status in setOf(JobStatus.ACCEPTED, JobStatus.APPROVED)) {
-                        Text(
-                            "💰 Escrow Amount: KSh ${it.toInt()}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                // ── Payment Amount (for completed/approved jobs) ──
+                if (isCompleted || isApproved) {
+                    job.paymentAmount?.let { amount ->
+                        InfoRow(
+                            icon = Icons.Outlined.Payments,
+                            text = "Payment: KSh ${formatPrice(amount)}"
+                        )
+                    }
+
+                    job.platformFee?.let { fee ->
+                        InfoRow(
+                            icon = Icons.Outlined.Info,
+                            text = "Platform Fee: KSh ${formatPrice(fee)}",
+                            textColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    job.mpesaReceiptNumber?.let { receipt ->
+                        InfoRow(
+                            icon = Icons.Outlined.Receipt,
+                            text = "Receipt: $receipt"
                         )
                     }
                 }
 
-                job.mpesaReceiptNumber?.let {
+                // ── Escrow Amount (for accepted jobs) ──
+                if (isAccepted && job.paymentAmount != null) {
+                    job.paymentAmount?.let { amount ->
+                        if (amount > 0) {
+                            InfoRow(
+                                icon = Icons.Outlined.Lock,
+                                text = "Escrow: KSh ${formatPrice(amount)}",
+                                textColor = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+
+                // ── Escrow Message ──
+                job.escrowMessage?.let { message ->
                     Text(
-                        "📱 M-Pesa Receipt: $it",
+                        message,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
 
-                job.escrowMessage?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Pass job to PaymentStatusIndicator
-                if (job.status in setOf(JobStatus.ACCEPTED, JobStatus.APPROVED)) {
+                // ── Payment Status Indicator ──
+                if (isAccepted || isApproved) {
                     PaymentStatusIndicator(
                         paymentStatus = paymentStatus,
-                        job = job  // Pass the job parameter
+                        job = job
                     )
                 }
 
-                if (job.negotiatedPrice != null && job.status == JobStatus.PENDING) {
+                // ── Counter Offer Pending ──
+                if (job.negotiatedPrice != null && isPending) {
                     Text(
-                        "Counter-offer pending",
+                        "📝 Counter-offer pending",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiaryContainer
                     )
                 }
 
+                // ── Rejection / Cancellation Reasons ──
                 job.rejectionReason?.let {
                     Text(
-                        "Rejected: $it",
+                        "❌ Rejected: $it",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.error
                     )
                 }
-
                 job.cancellationReason?.let {
                     Text(
-                        "Cancelled: $it",
+                        "🚫 Cancelled: $it",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.error
                     )
                 }
 
+                // ── Action Buttons ──
                 if (isActionInProgress) {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
@@ -145,35 +212,67 @@ fun JobCard(
                         trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
                     )
                 } else {
-                    actions()
+                    JobActionButtons(
+                        job = job,
+                        paymentStatus = paymentStatus,
+                        onAccept = onAccept,
+                        onReject = onReject,
+                        onCounter = onCounter,
+                        onStart = onStart,
+                        onComplete = onComplete,
+                        onWithdraw = onWithdraw,
+                        onViewReceipt = onViewReceipt,
+                        onViewDetails = onViewDetails
+                    )
                 }
             }
         }
     }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Info Row
+// ─────────────────────────────────────────────────────────────
 @Composable
-private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun InfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    textColor: androidx.compose.ui.graphics.Color? = null
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Icon(
             icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.width(4.dp))
         Text(
             text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.bodySmall,
+            color = textColor ?: MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Status Chip
+// ─────────────────────────────────────────────────────────────
 @Composable
-private fun StatusChip(status: JobStatus, paymentStatus: PaymentStatus? = null) {
+private fun StatusChip(
+    status: JobStatus,
+    paymentStatus: PaymentStatus? = null
+) {
     val (containerColor, contentColor, label) = when (status) {
-        JobStatus.ACCEPTED, JobStatus.APPROVED -> {
+        JobStatus.PENDING ->
+            Triple(
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer,
+                "PENDING"
+            )
+        JobStatus.ACCEPTED -> {
             when (paymentStatus) {
                 PaymentStatus.PAID ->
                     Triple(
@@ -181,50 +280,26 @@ private fun StatusChip(status: JobStatus, paymentStatus: PaymentStatus? = null) 
                         MaterialTheme.colorScheme.primary,
                         "PAYMENT CONFIRMED"
                     )
-                PaymentStatus.NO_PAYMENT ->
+                PaymentStatus.NO_PAYMENT, PaymentStatus.PENDING ->
                     Triple(
                         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
                         MaterialTheme.colorScheme.error,
                         "AWAITING PAYMENT"
                     )
-                PaymentStatus.PENDING, PaymentStatus.WAITING ->
-                    Triple(
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.error,
-                        "PAYMENT PENDING"
-                    )
-                PaymentStatus.RELEASED ->
-                    Triple(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.primary,
-                        "PAYMENT RELEASED"
-                    )
-                PaymentStatus.DISPUTED ->
-                    Triple(
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.error,
-                        "PAYMENT DISPUTED"
-                    )
-                PaymentStatus.FAILED ->
-                    Triple(
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.error,
-                        "PAYMENT FAILED"
-                    )
-                PaymentStatus.REFUNDED ->
-                    Triple(
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.error,
-                        "PAYMENT REFUNDED"
-                    )
                 else ->
                     Triple(
                         MaterialTheme.colorScheme.secondaryContainer,
                         MaterialTheme.colorScheme.onSecondaryContainer,
-                        status.name
+                        "ACCEPTED"
                     )
             }
         }
+        JobStatus.APPROVED ->
+            Triple(
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                MaterialTheme.colorScheme.primary,
+                "APPROVED"
+            )
         JobStatus.IN_PROGRESS ->
             Triple(
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
@@ -274,13 +349,16 @@ private fun StatusChip(status: JobStatus, paymentStatus: PaymentStatus? = null) 
     )
 }
 
+// ─────────────────────────────────────────────────────────────
+// Payment Status Indicator
+// ─────────────────────────────────────────────────────────────
 @Composable
 private fun PaymentStatusIndicator(
     paymentStatus: PaymentStatus?,
-    job: Job  // Added job parameter
+    job: Job
 ) {
     when (paymentStatus) {
-        PaymentStatus.NO_PAYMENT -> {
+        PaymentStatus.NO_PAYMENT, PaymentStatus.PENDING, PaymentStatus.WAITING -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -290,7 +368,11 @@ private fun PaymentStatusIndicator(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Waiting for employer to fund escrow...",
+                    text = if (job.status == JobStatus.APPROVED) {
+                        "Payment pending final confirmation..."
+                    } else {
+                        "Waiting for employer to fund escrow..."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -312,22 +394,6 @@ private fun PaymentStatusIndicator(
                 )
             }
         }
-        PaymentStatus.PENDING, PaymentStatus.WAITING -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "⏳",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "Payment in progress...",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
         PaymentStatus.RELEASED -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -338,7 +404,7 @@ private fun PaymentStatusIndicator(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Payment released to worker",
+                    text = "Payment released to your wallet!",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -393,7 +459,6 @@ private fun PaymentStatusIndicator(
             }
         }
         null -> {
-            // Now 'job' is accessible here
             if (job.status in setOf(JobStatus.ACCEPTED, JobStatus.APPROVED)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -411,18 +476,262 @@ private fun PaymentStatusIndicator(
                 }
             }
         }
-        else -> {
-            // Unknown payment status
+        else -> Unit
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Job Action Buttons
+// ─────────────────────────────────────────────────────────────
+@Composable
+private fun JobActionButtons(
+    job: Job,
+    paymentStatus: PaymentStatus?,
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+    onCounter: (Double) -> Unit,
+    onStart: () -> Unit,
+    onComplete: () -> Unit,
+    onWithdraw: () -> Unit,
+    onViewReceipt: () -> Unit,
+    onViewDetails: () -> Unit
+) {
+    when (job.status) {
+        JobStatus.PENDING -> {
+            PendingJobActions(
+                onAccept = onAccept,
+                onReject = onReject,
+                onCounter = onCounter
+            )
+        }
+        JobStatus.ACCEPTED -> {
+            AcceptedJobActions(
+                paymentStatus = paymentStatus,
+                onStart = onStart
+            )
+        }
+        JobStatus.IN_PROGRESS -> {
+            InProgressJobActions(onComplete = onComplete)
+        }
+        JobStatus.COMPLETED -> {
+            CompletedJobActions(
+                onViewReceipt = onViewReceipt,
+                onViewDetails = onViewDetails
+            )
+        }
+        JobStatus.APPROVED -> {
+            ApprovedJobActions(
+                onWithdraw = onWithdraw,
+                onViewReceipt = onViewReceipt,
+                onViewDetails = onViewDetails
+            )
+        }
+        JobStatus.REJECTED, JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED -> {
+            // No actions - just display the job
+            Unit
+        }
+        else -> Unit
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Individual Action Components
+// ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun PendingJobActions(
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+    onCounter: (Double) -> Unit
+) {
+    var showCounterField by remember { mutableStateOf(false) }
+    var counterPrice by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onAccept,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) { Text("Accept") }
+
+            OutlinedButton(
+                onClick = onReject,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) { Text("Reject") }
+        }
+
+        TextButton(
+            onClick = { showCounterField = !showCounterField },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (showCounterField) "Cancel Counter Offer" else "Make Counter Offer")
+        }
+
+        if (showCounterField) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = counterPrice,
+                    onValueChange = { counterPrice = it },
+                    label = { Text("Your price (KSh)") },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                )
+                Button(
+                    onClick = {
+                        counterPrice.toDoubleOrNull()?.let { onCounter(it) }
+                        showCounterField = false
+                    },
+                    enabled = counterPrice.toDoubleOrNull() != null,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) { Text("Send") }
+            }
         }
     }
 }
 
 @Composable
+private fun AcceptedJobActions(
+    paymentStatus: PaymentStatus?,
+    onStart: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (paymentStatus == PaymentStatus.PAID) {
+            Button(
+                onClick = onStart,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) { Text("Start Job") }
+        } else {
+            Text(
+                text = "⏳ Waiting for employer to fund escrow...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun InProgressJobActions(onComplete: () -> Unit) {
+    Button(
+        onClick = onComplete,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary
+        )
+    ) { Text("Mark Complete") }
+}
+
+@Composable
+private fun CompletedJobActions(
+    onViewReceipt: () -> Unit,
+    onViewDetails: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "✅ Job completed — waiting for employer confirmation.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = onViewDetails,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) { Text("Details") }
+            OutlinedButton(
+                onClick = onViewReceipt,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) { Text("Receipt") }
+        }
+    }
+}
+
+@Composable
+private fun ApprovedJobActions(
+    onWithdraw: () -> Unit,
+    onViewReceipt: () -> Unit,
+    onViewDetails: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "✅ Employer confirmed! Payment is ready to withdraw.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Button(
+            onClick = onWithdraw,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Outlined.AccountBalanceWallet,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Withdraw to Wallet")
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = onViewDetails,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) { Text("Details") }
+            OutlinedButton(
+                onClick = onViewReceipt,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) { Text("Receipt") }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helper Functions
+// ─────────────────────────────────────────────────────────────
+private fun formatPrice(amount: Double): String {
+    return String.format("%,.2f", amount)
+}
+
+@Composable
 private fun statusAccentColor(status: JobStatus) = when (status) {
+    JobStatus.PENDING -> MaterialTheme.colorScheme.tertiaryContainer
     JobStatus.ACCEPTED, JobStatus.APPROVED -> MaterialTheme.colorScheme.primary
     JobStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primary
     JobStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
     JobStatus.REJECTED -> MaterialTheme.colorScheme.error
     JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED -> MaterialTheme.colorScheme.error
-    else -> MaterialTheme.colorScheme.tertiaryContainer
+    else -> MaterialTheme.colorScheme.secondaryContainer
 }
