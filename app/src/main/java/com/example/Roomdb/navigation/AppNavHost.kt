@@ -24,6 +24,7 @@ import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 import com.example.Roomdb.viewmodel.employer.ClientJobsViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
 import com.example.Roomdb.viewmodel.employer.JobRequestViewModel
+import com.example.Roomdb.viewmodel.worker.WalletViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerJobsViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
@@ -42,7 +43,8 @@ fun AppNavHost(
     workerProfileViewModel: WorkerProfileViewModel,
     clientJobsViewModel: ClientJobsViewModel,     // new
     workerJobsViewModel: WorkerJobsViewModel,     // new
-    jobRequestViewModel: JobRequestViewModel      // new
+    jobRequestViewModel: JobRequestViewModel,      // new
+    walletViewModel: WalletViewModel,
 ) {
     val backStack = rememberNavBackStack(ScreenKey.Splash)
 
@@ -149,6 +151,7 @@ fun AppNavHost(
                     chatListViewModel = chatListViewModel,
                     workerProfileViewModel = workerProfileViewModel,
                     workerJobsViewModel = workerJobsViewModel,
+                    walletViewModel = walletViewModel,
                     onOpenChat = { recipientId, recipientName -> backStack.add(ScreenKey.Chat(recipientId, recipientName)) },
                     onLogout = {
                         chatListViewModel.clearState()

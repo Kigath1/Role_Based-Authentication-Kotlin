@@ -18,6 +18,7 @@ import com.example.Roomdb.data.repositoryimpl.auth.RegistrationRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.employer.ClientJobRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.employer.ClientProfileRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.employer.MessageRepositoryImpl
+import com.example.Roomdb.data.repositoryimpl.worker.WalletRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.worker.WorkerJobRepositoryImpl
 import com.example.Roomdb.data.repositoryimpl.worker.WorkerProfileRepositoryImpl
 import com.example.Roomdb.domain.repository.auth.RegistrationRepository
@@ -25,6 +26,7 @@ import com.example.Roomdb.domain.repository.employer.ClientJobRepository
 import com.example.Roomdb.domain.repository.employer.ClientProfileRepository
 import com.example.Roomdb.domain.repository.employer.MessageRepository
 import com.example.Roomdb.domain.repository.employer.WorkerRepository
+import com.example.Roomdb.domain.repository.worker.WalletRepository
 import com.example.Roomdb.domain.repository.worker.WorkerJobRepository
 import com.example.Roomdb.domain.repository.worker.WorkerProfileRepository
 import com.example.Roomdb.domain.usecases.auth.RegisterUseCase
@@ -49,12 +51,15 @@ import com.example.Roomdb.domain.usecases.worker.CheckWorkerProfileExistsUseCase
 import com.example.Roomdb.domain.usecases.worker.CompleteJobUseCase
 import com.example.Roomdb.domain.usecases.worker.CounterOfferUseCase
 import com.example.Roomdb.domain.usecases.worker.CreateWorkerProfileUseCase
+import com.example.Roomdb.domain.usecases.worker.GetWalletBalanceUseCase
+import com.example.Roomdb.domain.usecases.worker.GetWalletTransactionsUseCase
 import com.example.Roomdb.domain.usecases.worker.GetWorkerJobsUseCase
 import com.example.Roomdb.domain.usecases.worker.GetWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.RejectJobUseCase
 import com.example.Roomdb.domain.usecases.worker.StartJobUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
+import com.example.Roomdb.domain.usecases.worker.WithdrawFundsUseCase
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import kotlin.jvm.java
 
@@ -109,6 +114,11 @@ class TestKonnectApplication : Application() {
     lateinit var completeJobUseCase: CompleteJobUseCase
     lateinit var getWorkerJobsUseCase: GetWorkerJobsUseCase
     lateinit var checkPaymentStatusUseCase: CheckPaymentStatusUseCase
+
+    lateinit var walletRepository: WalletRepository
+    lateinit var getWalletBalanceUseCase: GetWalletBalanceUseCase
+    lateinit var withdrawFundsUseCase: WithdrawFundsUseCase
+    lateinit var getWalletTransactionsUseCase: GetWalletTransactionsUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -197,6 +207,11 @@ class TestKonnectApplication : Application() {
             completeJobUseCase = CompleteJobUseCase(workerJobRepository)
             getWorkerJobsUseCase = GetWorkerJobsUseCase(workerJobRepository)
             checkPaymentStatusUseCase = CheckPaymentStatusUseCase(workerJobRepository)
+
+            walletRepository = WalletRepositoryImpl(RetrofitInstance.walletApi)
+            getWalletBalanceUseCase = GetWalletBalanceUseCase(walletRepository)
+            withdrawFundsUseCase = WithdrawFundsUseCase(walletRepository)
+            getWalletTransactionsUseCase = GetWalletTransactionsUseCase(walletRepository)
             android.util.Log.d("AppInit", "All use cases initialized successfully")
 
         } catch (e: Exception) {

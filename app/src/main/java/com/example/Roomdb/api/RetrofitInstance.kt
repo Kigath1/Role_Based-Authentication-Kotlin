@@ -6,6 +6,7 @@ import com.example.Roomdb.api.employer.ClientJobApiService
 import com.example.Roomdb.api.employer.ClientProfileApiService
 import com.example.Roomdb.api.employer.MessageApiService
 import com.example.Roomdb.api.employer.WorkerApiService
+import com.example.Roomdb.api.worker.WalletApiService
 import com.example.Roomdb.api.worker.WorkerJobApiService
 import com.example.Roomdb.api.worker.WorkerProfileApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -86,5 +87,9 @@ object RetrofitInstance {
 
     val workerJobApi: WorkerJobApiService by lazy {
         buildRetrofit(requiresAuth = true).create(WorkerJobApiService::class.java)
+    }
+
+    val walletApi: WalletApiService by lazy {
+        buildRetrofit(requiresAuth = true).create(WalletApiService::class.java)
     }
 }

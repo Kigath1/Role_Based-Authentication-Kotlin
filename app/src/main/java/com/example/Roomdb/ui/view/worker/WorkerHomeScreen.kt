@@ -17,11 +17,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.Roomdb.data.model.Job
 import com.example.Roomdb.data.model.JobStatus
 import com.example.Roomdb.viewmodel.auth.AuthViewModel
 import com.example.Roomdb.viewmodel.common.chats.ChatListViewModel
+import com.example.Roomdb.viewmodel.worker.WalletViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerJobsViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
@@ -41,6 +43,7 @@ fun WorkerHomeScreen(
     chatListViewModel: ChatListViewModel,
     workerProfileViewModel: WorkerProfileViewModel,
     workerJobsViewModel: WorkerJobsViewModel,
+    walletViewModel: WalletViewModel,
     onOpenChat: (recipientId: String, recipientName: String) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -133,13 +136,7 @@ fun WorkerHomeScreen(
                     onGoToWallet = { selectedTab = WorkerTab.WALLET }
                 )
                 WorkerTab.WALLET -> WalletScreen(
-                    balance = "0.00",
-                    available = "0.00",
-                    inEscrow = "0.00",
-                    transactions = emptyList(),
-                    isLoading = false,
-                    onWithdraw = { /* Handle withdraw */ },
-                    onViewAllTransactions = { /* Navigate to full transaction history */ }
+                    viewModel = walletViewModel
                 )
                 WorkerTab.PROFILE -> WorkerProfileScreen(
                     viewModel = workerProfileViewModel,

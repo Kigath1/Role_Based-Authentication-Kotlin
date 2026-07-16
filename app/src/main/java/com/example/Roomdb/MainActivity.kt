@@ -27,6 +27,7 @@ import com.example.Roomdb.viewmodel.employer.ClientHomeViewModel
 import com.example.Roomdb.viewmodel.employer.ClientProfileViewModel
 import com.example.Roomdb.viewmodel.employer.ClientJobsViewModel
 import com.example.Roomdb.viewmodel.employer.JobRequestViewModel
+import com.example.Roomdb.viewmodel.worker.WalletViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerOnboardingViewModel
 import com.example.Roomdb.viewmodel.worker.WorkerProfileViewModel
@@ -36,19 +37,25 @@ class MainActivity : ComponentActivity() {
 
     private val app by lazy { application as TestKonnectApplication }
 
+    // ── Auth ──────────────────────────────────────────────────────────────
     private val authViewModel: AuthViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return AuthViewModel(
-                    app.loginUseCase, app.logoutUseCase, app.getCurrentUserUseCase,
-                    app.getUserRoleUseCase, app.checkAuthStatusUseCase,
-                    app.checkWorkerProfileExistsUseCase, app.secureStore
+                    app.loginUseCase,
+                    app.logoutUseCase,
+                    app.getCurrentUserUseCase,
+                    app.getUserRoleUseCase,
+                    app.checkAuthStatusUseCase,
+                    app.checkWorkerProfileExistsUseCase,
+                    app.secureStore
                 ) as T
             }
         }
     }
 
+    // ── Client Home ──────────────────────────────────────────────────────
     private val clientHomeViewModel: ClientHomeViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -58,6 +65,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ── Chat ──────────────────────────────────────────────────────────────
     private val chatListViewModel: ChatListViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -67,48 +75,62 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ── Registration ─────────────────────────────────────────────────────
     private val registrationViewModel: RegistrationViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return RegistrationViewModel(
-                    app.registerUseCase, app.verifyEmailUseCase, app.resendVerificationUseCase
+                    app.registerUseCase,
+                    app.verifyEmailUseCase,
+                    app.resendVerificationUseCase
                 ) as T
             }
         }
     }
 
+    // ── Client Profile ──────────────────────────────────────────────────
     private val clientProfileViewModel: ClientProfileViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return ClientProfileViewModel(
-                    app.getClientProfileUseCase, app.createClientProfileUseCase, app.updateClientProfileUseCase
+                    app.getClientProfileUseCase,
+                    app.createClientProfileUseCase,
+                    app.updateClientProfileUseCase
                 ) as T
             }
         }
     }
 
+    // ── Worker Profile ──────────────────────────────────────────────────
     private val workerProfileViewModel: WorkerProfileViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return WorkerProfileViewModel(app.getWorkerProfileUseCase, app.updateWorkerProfileUseCase) as T
+                return WorkerProfileViewModel(
+                    app.getWorkerProfileUseCase,
+                    app.updateWorkerProfileUseCase
+                ) as T
             }
         }
     }
 
+    // ── Worker Onboarding ──────────────────────────────────────────────
     private val workerOnboardingViewModel: WorkerOnboardingViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return WorkerOnboardingViewModel(
-                    app.createWorkerProfileUseCase, app.updateWorkerProfileUseCase, app.uploadDocumentUseCase
+                    app.createWorkerProfileUseCase,
+                    app.updateWorkerProfileUseCase,
+                    app.uploadDocumentUseCase
                 ) as T
             }
         }
     }
 
+    // ── Worker Dashboard ────────────────────────────────────────────────
     private val workerDashboardViewModel: WorkerDashboardViewModel by viewModels {
         viewModelFactory {
             initializer {
@@ -120,35 +142,58 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ── Job Requests — new ──────────────────────────────────────────────
+    // ── Client Jobs ──────────────────────────────────────────────────────
     private val clientJobsViewModel: ClientJobsViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return ClientJobsViewModel(
-                    app.getClientJobsUseCase, app.acceptCounterOfferUseCase, app.cancelJobUseCase
+                    app.getClientJobsUseCase,
+                    app.acceptCounterOfferUseCase,
+                    app.cancelJobUseCase
                 ) as T
             }
         }
     }
 
+    // ── Worker Jobs ──────────────────────────────────────────────────────
     private val workerJobsViewModel: WorkerJobsViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return WorkerJobsViewModel(
-                    app.getWorkerJobsUseCase, app.acceptJobUseCase, app.rejectJobUseCase,
-                    app.counterOfferUseCase, app.startJobUseCase, app.completeJobUseCase, app.checkPaymentStatusUseCase
+                    app.getWorkerJobsUseCase,
+                    app.acceptJobUseCase,
+                    app.rejectJobUseCase,
+                    app.counterOfferUseCase,
+                    app.startJobUseCase,
+                    app.completeJobUseCase,
+                    app.checkPaymentStatusUseCase
                 ) as T
             }
         }
     }
 
+    // ── Job Request ──────────────────────────────────────────────────────
     private val jobRequestViewModel: JobRequestViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return JobRequestViewModel(app.createJobRequestUseCase) as T
+            }
+        }
+    }
+
+    // ── Wallet ──────────────────────────────────────────────────────────
+    private val walletViewModel: WalletViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return WalletViewModel(
+                    app.getWalletBalanceUseCase,
+                    app.getWalletTransactionsUseCase,
+                    app.withdrawFundsUseCase
+                ) as T
             }
         }
     }
@@ -172,7 +217,7 @@ class MainActivity : ComponentActivity() {
                         clientJobsViewModel = clientJobsViewModel,
                         workerJobsViewModel = workerJobsViewModel,
                         jobRequestViewModel = jobRequestViewModel,
-
+                        walletViewModel = walletViewModel,
                         chatContent = { recipientId, recipientName, onBack ->
                             val viewModelStoreOwner = remember(recipientId) {
                                 object : ViewModelStoreOwner {
