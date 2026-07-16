@@ -5,11 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -18,33 +19,34 @@ import com.example.Roomdb.data.model.Job
 import com.example.Roomdb.data.model.JobStatus
 import com.example.Roomdb.data.model.PaymentStatus
 
+/**
+ * jobIsReleased / jobIsReviewed are derived in the ViewModel (paymentStatusMap +
+ * reviewedJobIds), NOT from job.status — there is no post-release job status.
+ * "APPROVED" in JobStatus is a worker-profile-verification status set by an
+ * admin; it is unrelated to job/escrow lifecycle and must never be used here.
+ */
 @Composable
 fun EmployerJobCard(
     job: Job,
     isActionInProgress: Boolean,
-    paymentStatus: PaymentStatus? = null,
-    onAcceptCounterOffer: () -> Unit = {},
-    onCancelJob: () -> Unit = {},
-    onViewReceipt: () -> Unit = {},
-    onViewDetails: () -> Unit = {},
-    onReleasePayment: () -> Unit = {},
-    onRefundPayment: () -> Unit = {}
+    paymentStatus: PaymentStatus?,
+    jobIsReleased: Boolean,
+    jobIsReviewed: Boolean,
+    onFundEscrow: () -> Unit,
+    onReleaseEscrow: () -> Unit,
+    onReview: () -> Unit,
+    onAcceptCounterOffer: () -> Unit,
+    onCancelJob: () -> Unit
 ) {
     val accentColor = statusAccentColor(job.status)
-    val isFinished = job.status in setOf(JobStatus.COMPLETED, JobStatus.APPROVED)
 
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = if (isFinished) {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLowest
-        },
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(Modifier.fillMaxWidth()) {
-            // Left accent strip
             Box(
                 modifier = Modifier
                     .width(4.dp)
@@ -53,12 +55,9 @@ fun EmployerJobCard(
             )
 
             Column(
-                Modifier
-                    .padding(16.dp)
-                    .weight(1f),
+                Modifier.padding(16.dp).weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // ── Header ──
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -68,94 +67,30 @@ fun EmployerJobCard(
                         job.description,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (isFinished) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(Modifier.width(8.dp))
-                    EmployerStatusChip(job.status, paymentStatus)
+                    EmployerStatusChip(job.status, paymentStatus, jobIsReleased)
                 }
 
-                // ── Worker Name ──
-                job.worker?.fullName?.let { workerName ->
-                    EmployerInfoRow(
-                        icon = Icons.Outlined.Person,
-                        text = "Worker: $workerName"
-                    )
+                job.worker?.fullName?.let {
+                    InfoRow(icon = Icons.Outlined.Person, text = "Worker: $it")
+                }
+                job.location?.let {
+                    InfoRow(icon = Icons.Outlined.LocationOn, text = it)
                 }
 
-                // ── Location ──
-                job.location?.let { location ->
-                    EmployerInfoRow(
-                        icon = Icons.Outlined.LocationOn,
-                        text = location
-                    )
-                }
-
-                // ── Scheduled Date ──
-                job.scheduledDate?.let { date ->
-                    EmployerInfoRow(
-                        icon = Icons.Outlined.CalendarToday,
-                        text = date
-                    )
-                }
-
-                // ── Price ──
                 val displayPrice = job.negotiatedPrice ?: job.jobPrice ?: job.totalCost
                 displayPrice?.let {
                     Text(
-                        "💰 KSh ${formatPrice(it)}",
+                        "KSh ${it.toInt()}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
 
-                // ── Payment Amount ──
-                if (job.status in setOf(JobStatus.COMPLETED, JobStatus.APPROVED)) {
-                    job.paymentAmount?.let { amount ->
-                        EmployerInfoRow(
-                            icon = Icons.Outlined.Payments,
-                            text = "Payment: KSh ${formatPrice(amount)}"
-                        )
-                    }
-                }
-
-                // ── Payment Status ──
-                if (job.status in setOf(JobStatus.ACCEPTED, JobStatus.APPROVED)) {
-                    EmployerPaymentStatusIndicator(paymentStatus)
-                }
-
-                // ── Escrow Message ──
-                job.escrowMessage?.let { message ->
-                    Text(
-                        message,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
-
-                // ── Rejection / Cancellation Reasons ──
-                job.rejectionReason?.let {
-                    Text(
-                        "❌ Rejected: $it",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-                job.cancellationReason?.let {
-                    Text(
-                        "🚫 Cancelled: $it",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                // ── Employer Actions ──
                 if (isActionInProgress) {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
@@ -166,12 +101,13 @@ fun EmployerJobCard(
                     EmployerJobActions(
                         job = job,
                         paymentStatus = paymentStatus,
+                        jobIsReleased = jobIsReleased,
+                        jobIsReviewed = jobIsReviewed,
+                        onFundEscrow = onFundEscrow,
+                        onReleaseEscrow = onReleaseEscrow,
+                        onReview = onReview,
                         onAcceptCounterOffer = onAcceptCounterOffer,
-                        onCancelJob = onCancelJob,
-                        onViewReceipt = onViewReceipt,
-                        onViewDetails = onViewDetails,
-                        onReleasePayment = onReleasePayment,
-                        onRefundPayment = onRefundPayment
+                        onCancelJob = onCancelJob
                     )
                 }
             }
@@ -179,356 +115,234 @@ fun EmployerJobCard(
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Employer Status Chip
-// ─────────────────────────────────────────────────────────────
 @Composable
-private fun EmployerStatusChip(
-    status: JobStatus,
-    paymentStatus: PaymentStatus? = null
-) {
-    val (containerColor, contentColor, label) = when (status) {
-        JobStatus.PENDING ->
-            Triple(
-                MaterialTheme.colorScheme.secondaryContainer,
-                MaterialTheme.colorScheme.onSecondaryContainer,
-                "PENDING"
-            )
-        JobStatus.ACCEPTED -> {
-            when (paymentStatus) {
-                PaymentStatus.PAID ->
-                    Triple(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.primary,
-                        "ESCROW FUNDED"
-                    )
-                PaymentStatus.NO_PAYMENT, PaymentStatus.PENDING ->
-                    Triple(
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-                        MaterialTheme.colorScheme.error,
-                        "AWAITING FUNDING"
-                    )
-                else ->
-                    Triple(
-                        MaterialTheme.colorScheme.secondaryContainer,
-                        MaterialTheme.colorScheme.onSecondaryContainer,
-                        "ACCEPTED"
-                    )
-            }
-        }
-        JobStatus.APPROVED ->
-            Triple(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                MaterialTheme.colorScheme.primary,
-                "PAYMENT RELEASED"
-            )
-        JobStatus.IN_PROGRESS ->
-            Triple(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                MaterialTheme.colorScheme.primary,
-                "IN PROGRESS"
-            )
-        JobStatus.COMPLETED ->
-            Triple(
-                MaterialTheme.colorScheme.tertiaryContainer,
-                MaterialTheme.colorScheme.onTertiaryContainer,
-                "COMPLETED"
-            )
-        JobStatus.REJECTED ->
-            Triple(
-                MaterialTheme.colorScheme.errorContainer,
-                MaterialTheme.colorScheme.onErrorContainer,
-                "REJECTED"
-            )
-        JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED ->
-            Triple(
-                MaterialTheme.colorScheme.errorContainer,
-                MaterialTheme.colorScheme.onErrorContainer,
-                "CANCELLED"
-            )
+private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(4.dp))
+        Text(text, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun EmployerStatusChip(status: JobStatus, paymentStatus: PaymentStatus?, jobIsReleased: Boolean) {
+    val (container, content, label) = when {
+        status == JobStatus.PENDING ->
+            Triple(MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer, "PENDING")
+
+        status == JobStatus.ACCEPTED && paymentStatus == PaymentStatus.PAID ->
+            Triple(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                MaterialTheme.colorScheme.primary, "ESCROW FUNDED")
+
+        status == JobStatus.ACCEPTED ->
+            Triple(MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer, "AWAITING YOUR PAYMENT")
+
+        status == JobStatus.IN_PROGRESS ->
+            Triple(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                MaterialTheme.colorScheme.primary, "IN PROGRESS")
+
+        status == JobStatus.COMPLETED && jobIsReleased ->
+            Triple(MaterialTheme.colorScheme.tertiaryContainer,
+                MaterialTheme.colorScheme.onTertiaryContainer, "PAID OUT")
+
+        status == JobStatus.COMPLETED ->
+            Triple(MaterialTheme.colorScheme.tertiaryContainer,
+                MaterialTheme.colorScheme.onTertiaryContainer, "COMPLETED")
+
+        status == JobStatus.REJECTED ->
+            Triple(MaterialTheme.colorScheme.errorContainer,
+                MaterialTheme.colorScheme.onErrorContainer, "REJECTED")
+
+        status == JobStatus.CANCELLED || status == JobStatus.CLIENT_CANCELLED ->
+            Triple(MaterialTheme.colorScheme.errorContainer,
+                MaterialTheme.colorScheme.onErrorContainer, "CANCELLED")
+
         else ->
-            Triple(
-                MaterialTheme.colorScheme.secondaryContainer,
-                MaterialTheme.colorScheme.onSecondaryContainer,
-                status.name
-            )
+            Triple(MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer, status.name)
     }
 
     AssistChip(
         onClick = {},
-        label = {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium
-            )
-        },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = containerColor,
-            labelColor = contentColor
-        ),
+        label = { Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium) },
+        colors = AssistChipDefaults.assistChipColors(containerColor = container, labelColor = content),
         border = null
     )
 }
 
-// ─────────────────────────────────────────────────────────────
-// Employer Info Row
-// ─────────────────────────────────────────────────────────────
-@Composable
-private fun EmployerInfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String,
-    textColor: androidx.compose.ui.graphics.Color? = null
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text,
-            style = MaterialTheme.typography.bodySmall,
-            color = textColor ?: MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Employer Payment Status Indicator
-// ─────────────────────────────────────────────────────────────
-@Composable
-private fun EmployerPaymentStatusIndicator(paymentStatus: PaymentStatus?) {
-    when (paymentStatus) {
-        PaymentStatus.NO_PAYMENT, PaymentStatus.PENDING -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("⏳")
-                Text(
-                    "Payment pending - waiting for you to fund escrow",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-        PaymentStatus.PAID -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("✅")
-                Text(
-                    "Payment confirmed - escrow funded",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-        PaymentStatus.RELEASED -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("💰")
-                Text(
-                    "Payment released to worker",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-        PaymentStatus.REFUNDED -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("↩️")
-                Text(
-                    "Payment refunded",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-        null -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("🔄")
-                Text(
-                    "Loading payment status...",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        else -> Unit
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Employer Job Actions
-// ─────────────────────────────────────────────────────────────
 @Composable
 private fun EmployerJobActions(
     job: Job,
     paymentStatus: PaymentStatus?,
+    jobIsReleased: Boolean,
+    jobIsReviewed: Boolean,
+    onFundEscrow: () -> Unit,
+    onReleaseEscrow: () -> Unit,
+    onReview: () -> Unit,
     onAcceptCounterOffer: () -> Unit,
-    onCancelJob: () -> Unit,
-    onViewReceipt: () -> Unit,
-    onViewDetails: () -> Unit,
-    onReleasePayment: () -> Unit,
-    onRefundPayment: () -> Unit
+    onCancelJob: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (job.status) {
             JobStatus.PENDING -> {
-                // Pending - show counter offer and cancel
                 if (job.negotiatedPrice != null) {
-                    Button(
-                        onClick = onAcceptCounterOffer,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Accept Counter-Offer: KSh ${formatPrice(job.negotiatedPrice ?: 0.0)}")
-                    }
-                }
-                OutlinedButton(
-                    onClick = onCancelJob,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
+                    // Worker sent a counter-offer — employer can accept it or cancel.
+                    Text(
+                        "The worker countered at KSh ${job.negotiatedPrice.toInt()}.",
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                ) { Text("Cancel Request") }
-            }
-            JobStatus.ACCEPTED -> {
-                // Accepted - show payment status and actions
-                when (paymentStatus) {
-                    PaymentStatus.NO_PAYMENT, PaymentStatus.PENDING -> {
-                        Text(
-                            "⏳ Waiting for you to fund escrow",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
-                            onClick = onViewDetails,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        ) { Text("Fund Escrow Now") }
+                            onClick = onAcceptCounterOffer,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) { Text("Accept Offer") }
+                        OutlinedButton(
+                            onClick = onCancelJob,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) { Text("Cancel") }
                     }
-                    PaymentStatus.PAID -> {
-                        Text(
-                            "✅ Escrow funded - job in progress",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    else -> Unit
-                }
-            }
-            JobStatus.IN_PROGRESS -> {
-                Text(
-                    "🔨 Worker is working on the job",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            JobStatus.COMPLETED -> {
-                // Completed - waiting for employer to release
-                Text(
-                    "✅ Job completed - review and release payment",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = onReleasePayment,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) { Text("Release Payment") }
+                } else {
+                    Text(
+                        "⏳ Waiting for worker to respond...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     OutlinedButton(
-                        onClick = onRefundPayment,
-                        modifier = Modifier.weight(1f),
+                        onClick = onCancelJob,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.error
                         )
-                    ) { Text("Refund") }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = onViewDetails,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) { Text("Details") }
-                    OutlinedButton(
-                        onClick = onViewReceipt,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) { Text("Receipt") }
+                    ) { Text("Cancel Request") }
                 }
             }
-            JobStatus.APPROVED -> {
-                // Approved - funds released
+
+            JobStatus.ACCEPTED -> {
+                when (paymentStatus) {
+                    PaymentStatus.PAID -> {
+                        Text(
+                            "✅ Escrow funded — job is starting.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    PaymentStatus.PENDING, PaymentStatus.WAITING -> {
+                        Text(
+                            "⏳ Payment in progress — check your phone.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                    else -> {
+                        Text(
+                            "The worker accepted this job. Fund the escrow to start it.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Button(
+                            onClick = onFundEscrow,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Icon(Icons.Outlined.Payments, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Fund Escrow")
+                        }
+                    }
+                }
+            }
+
+            JobStatus.IN_PROGRESS -> {
                 Text(
-                    "💰 Payment released to worker",
+                    "🔨 Worker is on the job.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = onViewDetails,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) { Text("Details") }
-                    OutlinedButton(
-                        onClick = onViewReceipt,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) { Text("Receipt") }
+            }
+
+            JobStatus.COMPLETED -> {
+                when {
+                    !jobIsReleased -> {
+                        Text(
+                            "✅ Worker marked this job complete. Release funds to pay them.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Button(
+                            onClick = onReleaseEscrow,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) { Text("Release Funds") }
+                    }
+                    !jobIsReviewed -> {
+                        Text(
+                            "💰 Funds released to the worker.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Button(
+                            onClick = onReview,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                contentColor = MaterialTheme.colorScheme.onSecondary
+                            )
+                        ) {
+                            Icon(Icons.Outlined.Star, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Review & Rate Worker")
+                        }
+                    }
+                    else -> {
+                        Text(
+                            "✅ Job complete and reviewed.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
+
             JobStatus.REJECTED -> {
-                Text(
-                    "❌ Job was rejected by worker",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
+                Text("❌ Job was rejected by worker",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             }
+
             JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED -> {
-                Text(
-                    "🚫 Job was cancelled",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
+                Text("🚫 Job was cancelled",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             }
+
             else -> Unit
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Helper Functions
-// ─────────────────────────────────────────────────────────────
-private fun formatPrice(amount: Double): String {
-    return String.format("%,.2f", amount)
-}
-
 @Composable
 private fun statusAccentColor(status: JobStatus) = when (status) {
-    JobStatus.PENDING -> MaterialTheme.colorScheme.tertiaryContainer
-    JobStatus.ACCEPTED, JobStatus.APPROVED -> MaterialTheme.colorScheme.primary
-    JobStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primary
+    JobStatus.ACCEPTED, JobStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primary
     JobStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
-    JobStatus.REJECTED -> MaterialTheme.colorScheme.error
-    JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED -> MaterialTheme.colorScheme.error
-    else -> MaterialTheme.colorScheme.secondaryContainer
+    JobStatus.REJECTED, JobStatus.CANCELLED, JobStatus.CLIENT_CANCELLED -> MaterialTheme.colorScheme.error
+    else -> MaterialTheme.colorScheme.tertiaryContainer
 }

@@ -12,8 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.Roomdb.data.remote.model.employer.JobRequest
-import com.example.Roomdb.data.remote.model.employer.Worker
 import com.example.Roomdb.ui.theme.KKTextPrimary
 import com.example.Roomdb.ui.view.employer.JobRequestSheet
 import com.example.Roomdb.ui.view.employer.WorkerListCard

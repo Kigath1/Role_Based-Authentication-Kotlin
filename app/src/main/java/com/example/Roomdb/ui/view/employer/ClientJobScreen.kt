@@ -36,30 +36,63 @@ fun ClientJobsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            SegmentedFilter(selected = state.filter, onSelect = viewModel::setFilter)
+        Box(Modifier.padding(padding).fillMaxSize()) {
+            Column(Modifier.fillMaxSize()) {
+                SegmentedFilter(state, viewModel::setFilter)
 
-            when {
-                state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-                state.filteredJobs.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text(if (state.filter == JobFilter.ACTIVE) "No active requests yet." else "No completed requests yet.")
-                }
-                else -> LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(state.filteredJobs, key = { it.id }) { job ->
-                        EmployerJobCard(
-                            job = job,
-                            isActionInProgress = state.actionInProgressJobId == job.id,
-                            onAcceptCounterOffer = { viewModel.acceptCounterOffer(job.id) },
-                            onCancelJob = { viewModel.cancelJob(job.id) },
-                            onViewReceipt = { /* Navigate to receipt */ },
-                            onViewDetails = { /* Navigate to job details */ },
-                            onReleasePayment = { /* Handle release payment */ },
-                            onRefundPayment = { /* Handle refund payment */ }
-                        )
+                when {
+                    state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+                    state.filteredJobs.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text(if (state.filter == JobFilter.ACTIVE) "No active requests yet." else "No completed requests yet.")
                     }
+                    else -> LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(state.filteredJobs, key = { it.id }) { job ->
+                            EmployerJobCard(
+                                job = job,
+                                isActionInProgress = state.actionInProgressJobId == job.id,
+                                paymentStatus = state.paymentStatusMap[job.id],
+                                jobIsReleased = state.isReleased(job.id),
+                                jobIsReviewed = state.isReviewed(job.id),
+                                onFundEscrow = { viewModel.openFundingSheet(job.id) },
+                                onReleaseEscrow = { viewModel.releaseEscrow(job.id) },
+                                onReview = { viewModel.openReviewPrompt(job.id) },
+                                onAcceptCounterOffer = { viewModel.acceptCounterOffer(job.id) },
+                                onCancelJob = { viewModel.cancelJob(job.id) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Fund escrow sheet ────────────────────────────────────────
+            state.fundingJobId?.let { jobId ->
+                FundingSheet(
+                    onDismiss = { viewModel.dismissFundingSheet() },
+                    onFund = { phoneNumber -> viewModel.fundEscrow(jobId, phoneNumber) }
+                )
+            }
+
+            // ── STK waiting dialog ───────────────────────────────────────
+            if (state.awaitingStkConfirmationJobId != null) {
+                StkWaitingDialog(onDismiss = { viewModel.dismissStkWaitingDialog() })
+            }
+
+            // ── Review dialog ────────────────────────────────────────────
+            state.reviewPromptJobId?.let { jobId ->
+                val job = state.jobs.find { it.id == jobId }
+                val workerProfileId = job?.worker?.id
+                if (job != null && workerProfileId != null) {
+                    ReviewDialog(
+                        workerName = job.worker.fullName,
+                        isSubmitting = state.actionInProgressJobId == jobId,
+                        onDismiss = { viewModel.dismissReviewPrompt() },
+                        onSubmit = { rating, comment ->
+                            viewModel.submitReview(jobId, workerProfileId, rating, comment)
+                        }
+                    )
                 }
             }
         }
@@ -67,9 +100,37 @@ fun ClientJobsScreen(
 }
 
 @Composable
-private fun SegmentedFilter(selected: JobFilter, onSelect: (JobFilter) -> Unit) {
+private fun SegmentedFilter(
+    state: com.example.Roomdb.viewmodel.employer.ClientJobsUiState,
+    onSelect: (JobFilter) -> Unit
+) {
     Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(selected == JobFilter.ACTIVE, { onSelect(JobFilter.ACTIVE) }, label = { Text("Active") })
-        FilterChip(selected == JobFilter.COMPLETED, { onSelect(JobFilter.COMPLETED) }, label = { Text("Completed") })
+        FilterChip(
+            selected = state.filter == JobFilter.ACTIVE,
+            onClick = { onSelect(JobFilter.ACTIVE) },
+            label = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Active")
+                    if (state.needsFundingCount > 0) {
+                        Spacer(Modifier.width(4.dp))
+                        Badge { Text(state.needsFundingCount.toString()) }
+                    }
+                }
+            }
+        )
+        FilterChip(
+            selected = state.filter == JobFilter.COMPLETED,
+            onClick = { onSelect(JobFilter.COMPLETED) },
+            label = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Completed")
+                    val badgeCount = state.readyToReleaseCount + state.awaitingReviewCount
+                    if (badgeCount > 0) {
+                        Spacer(Modifier.width(4.dp))
+                        Badge { Text(badgeCount.toString()) }
+                    }
+                }
+            }
+        )
     }
 }

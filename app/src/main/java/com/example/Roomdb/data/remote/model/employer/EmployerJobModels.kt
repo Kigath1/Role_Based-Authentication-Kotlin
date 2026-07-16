@@ -1,55 +1,55 @@
-package com.example.Roomdb.data.remote.model.employer
+package com.example.Roomdb.data.remote.model
 
 import kotlinx.serialization.Serializable
 
+// ── STK Push ──────────────────────────────────────────────
+// NOTE: PaymentStatusResponse is already defined in JobDto.kt (worker side) —
+// reused here as-is, not redeclared.
 @Serializable
-data class JobRequest(
-    val description: String,
-    val location: String,
-    val scheduledDate: String, // "yyyy-MM-dd"
-    val jobPrice: Int,
-    val totalCost: Int // send equal to jobPrice at creation
-)
-@Serializable
-data class JobRequestResponse(
-    val id: String,
-    val description: String,
-    val status: String,
-    val totalCost: Long,
-    val client: Client,
-    val worker: Worker,
-)
-@Serializable
-data class Client(
-    val id: String,
-    val fullName: String,
-)
-@Serializable
-data class Worker(
-    val id: String,
-    val fullName: String,
+data class StkPushRequest(
+    val jobId: String,
+    val phoneNumber: String
 )
 
 @Serializable
-data class JobPartyDto(
-    val id: String? = null,
-    val fullName: String? = null
+data class StkPushResponse(
+    val status: String,              // "PENDING"
+    val checkoutRequestId: String?,
+    val message: String?,
+    val merchantRequestID: String?
 )
 
-// All fields nullable except id/description/status – API response varies.
-//@Serializable
-data class EmployerJobResponses(
+// ── Escrow Release / Refund ──────────────────────────────
+@Serializable
+data class EscrowActionResponse(
+    val status: String,              // "RELEASED" or "REFUNDED"
+    val message: String?
+)
+
+// ── Payment Receipt ───────────────────────────────────────
+@Serializable
+data class PaymentReceiptResponse(
+    val mpesaReceiptNumber: String?,
+    val transactionDate: String?,
+    val amount: Double?,
+    val platformFee: Double?,
+    val workerAmount: Double?,
+    val status: String?
+)
+
+// ── Reviews ───────────────────────────────────────────────
+@Serializable
+data class CreateReviewRequest(
+    val rating: Int,
+    val comment: String
+)
+
+@Serializable
+data class ReviewDto(
     val id: String,
-    val description: String,
-    val status: String,
-    val location: String? = null,
-    val scheduledDate: String? = null,
-    val jobPrice: Double? = null,
-    val totalCost: Double? = null,
-    val negotiatedPrice: Double? = null,
-    val rejectionReason: String? = null,
-    val cancellationReason: String? = null,
-    val client: JobPartyDto? = null,
-    val worker: JobPartyDto? = null
+    val rating: Int,
+    val comment: String?,
+    val client: JobPartyDto?,
+    val worker: JobPartyDto?,
+    val createdAt: String?
 )
-

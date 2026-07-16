@@ -150,7 +150,11 @@ class MainActivity : ComponentActivity() {
                 return ClientJobsViewModel(
                     app.getClientJobsUseCase,
                     app.acceptCounterOfferUseCase,
-                    app.cancelJobUseCase
+                    app.cancelJobUseCase,
+                    app.fundEscrowUseCase,
+                    app.checkClientPaymentStatusUseCase,
+                    app.releaseEscrowUseCase,
+                    app.submitReviewUseCase
                 ) as T
             }
         }
@@ -174,7 +178,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ── Job Request ──────────────────────────────────────────────────────
+    // ── Employer Job ──────────────────────────────────────────────────────
     private val jobRequestViewModel: JobRequestViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {

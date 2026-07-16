@@ -60,7 +60,12 @@ import com.example.Roomdb.domain.usecases.worker.StartJobUseCase
 import com.example.Roomdb.domain.usecases.worker.UpdateWorkerProfileUseCase
 import com.example.Roomdb.domain.usecases.worker.UploadDocumentUseCase
 import com.example.Roomdb.domain.usecases.worker.WithdrawFundsUseCase
-import com.example.Roomdb.viewmodel.worker.WorkerDashboardViewModel
+import com.example.Roomdb.domain.usecases.employer.FundEscrowUseCase
+import com.example.Roomdb.domain.usecases.employer.CheckClientPaymentStatusUseCase
+import com.example.Roomdb.domain.usecases.employer.GetPaymentReceiptUseCase
+import com.example.Roomdb.domain.usecases.employer.ReleaseEscrowUseCase
+import com.example.Roomdb.domain.usecases.employer.RefundEscrowUseCase
+import com.example.Roomdb.domain.usecases.employer.SubmitReviewUseCase
 import kotlin.jvm.java
 
 class TestKonnectApplication : Application() {
@@ -119,6 +124,13 @@ class TestKonnectApplication : Application() {
     lateinit var getWalletBalanceUseCase: GetWalletBalanceUseCase
     lateinit var withdrawFundsUseCase: WithdrawFundsUseCase
     lateinit var getWalletTransactionsUseCase: GetWalletTransactionsUseCase
+
+    lateinit var fundEscrowUseCase: FundEscrowUseCase
+    lateinit var checkClientPaymentStatusUseCase: CheckClientPaymentStatusUseCase
+    lateinit var getPaymentReceiptUseCase: GetPaymentReceiptUseCase
+    lateinit var releaseEscrowUseCase: ReleaseEscrowUseCase
+    lateinit var refundEscrowUseCase: RefundEscrowUseCase
+    lateinit var submitReviewUseCase: SubmitReviewUseCase
 
     override fun onCreate() {
         super.onCreate()
@@ -212,6 +224,13 @@ class TestKonnectApplication : Application() {
             getWalletBalanceUseCase = GetWalletBalanceUseCase(walletRepository)
             withdrawFundsUseCase = WithdrawFundsUseCase(walletRepository)
             getWalletTransactionsUseCase = GetWalletTransactionsUseCase(walletRepository)
+
+            fundEscrowUseCase = FundEscrowUseCase(clientJobRepository)
+            checkClientPaymentStatusUseCase = CheckClientPaymentStatusUseCase(clientJobRepository)
+            getPaymentReceiptUseCase = GetPaymentReceiptUseCase(clientJobRepository)
+            releaseEscrowUseCase = ReleaseEscrowUseCase(clientJobRepository)
+            refundEscrowUseCase = RefundEscrowUseCase(clientJobRepository)
+            submitReviewUseCase = SubmitReviewUseCase(clientJobRepository)
             android.util.Log.d("AppInit", "All use cases initialized successfully")
 
         } catch (e: Exception) {
